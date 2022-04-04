@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Multimodal Street View</title>
+        <link rel="stylesheet" href="/css/styles.css">
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+        <script src="/js/streetview.js"></script>
+    </head>
+    <body>
+        <h1>Multimodal Street View</h1>
+        <div id="pano"></div>
+
+        <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+        <script
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDdEJP7o_u4WuAWb1MoA1NTxqptyT3jcN8&callback=initStreetView&v=weekly"
+          async defer>
+        </script>
+    </body>
+</html>
+
