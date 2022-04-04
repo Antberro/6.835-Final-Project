@@ -18,8 +18,18 @@ function processSVData({ data }) {
     panorama.setPano(location.pano);
     panorama.setZoom(0);
     panorama.setPano({
-        heading: 270,
+        heading: 0,
         pitch: 0,
     });
     panorama.setVisible(true);
 }
+
+var cursor;
+var cursorPosition;
+
+// Main loop
+Leap.loop({ hand: function(hand) {
+    cursorPosition = hand.screenPosition();
+    cursor.setScreenPosition(cursorPosition);
+    console.log(cursorPosition);
+}}).use('screenPosition', {scale: LEAPSCALE});
