@@ -91,11 +91,14 @@ function changeZoom(hand) {
 }
 
 function changePosition(hand) {
-        currHeading = panorama.getPov().heading;
-        // console.log(currHeading);
+        var currHeading = panorama.getPov().heading;
+        var direction = Math.atan(hand.direction[0] / hand.direction[2]) * 180 / Math.PI;
+        currHeading += direction;
+
         var links = panorama.getLinks();
 
         for (let link of links) {
+            // remember to change this
             link.diff = Math.abs(currHeading - link.heading);
         }
         links = links.sort((obj1, obj2) => obj1.diff - obj2.diff);
@@ -109,18 +112,6 @@ function changePosition(hand) {
 
 // Main loop
 Leap.loop({ hand: function(hand) {
-    // var cursorPosition = hand.screenPosition();
-    // let cursor = document.getElementById('cursor');
-    // var x = parseInt(cursorPosition[0]);
-    // var y = parseInt(cursorPosition[1]);
-    // if (x > 0 && y > 0) {
-    //     cursor.style.left = x + 'px';
-    //     cursor.style.top = y + 'px';
-    //     if (hand.grabStrength > 0.9) {
-    //         click(x, y);
-    //     }
-    // }
-
     var pointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
     var palmVel = hand.palmVelocity;
     var palmVelX = palmVel[0];
