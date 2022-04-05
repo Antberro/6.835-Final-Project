@@ -119,8 +119,10 @@ function changePosition(hand, change) {
     var links = panorama.getLinks();
 
     for (let link of links) {
-        // remember to change this
-        link.diff = Math.abs(currHeading - link.heading);
+        // should double check this
+        var diff1 = Math.abs(currHeading - link.heading);
+        var diff2 = Math.abs(Math.abs(currHeading - link.heading) - 360);
+        link.diff = diff1 < diff2 ? diff1 : diff2;
     }
     links = links.sort((obj1, obj2) => obj1.diff - obj2.diff);
 
@@ -202,21 +204,24 @@ var processSpeech = function(transcript) {
         changeRotation(null, 0, -25);
     }
 
-    // 
-    else if (userSaid(transcript, ["move forward"])) {
-
+    // do the move move
+    else if (userSaid(transcript, ["move forward", "moves forward"])) {
+        changePosition(null, 0);
     }
-
-    else if (userSaid(transcript, ["move backward"])) {
-
+    else if (userSaid(transcript, ["move backward", "moves backward"])) {
+        changePosition(null, 180);
     }
-
-    else if (userSaid(transcript, ["move right"])) {
-
+    else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "moves slight right", "moves slightly right", "moves right slightly"])) {
+        changePosition(null, 45);
     }
-
-    else if (userSaid(transcript, ["move left"])) {
-
+    else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "moves slight left", "moves slightly left", "moves left slightly"])) {
+        changePosition(null, -45);
+    }
+    else if (userSaid(transcript, ["move right", "moves right"])) {
+        changePosition(null, 90);
+    }
+    else if (userSaid(transcript, ["move left", "moves left"])) {
+        changePosition(null, -90);
     }
 
     // zoom
