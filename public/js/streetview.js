@@ -86,8 +86,25 @@ function changeRotation(hand) {
         setTimeout(() => gestureTimer = false , 50 );
 }
 
-function changeZoom(hand) {
-    return;
+function changeZoom(hand1, hand2) {
+
+    console.log(hand1.palmVelocity);
+    console.log(hand2.palmVelocity);
+    console.log();
+
+    if (hand1.palmVelocity[0] > 25) {
+        panorama.setZoom(panorama.getZoom() + 0.1);
+        gestureTimer = true;
+        setTimeout(() => gestureTimer = false , 50 );
+    }
+    else if (hand1.palmVelocity[0] < -25) {
+        panorama.setZoom(panorama.getZoom() - 0.1);
+        gestureTimer = true;
+        setTimeout(() => gestureTimer = false , 50 );
+    }
+
+    
+
 }
 
 function changePosition(hand) {
@@ -111,7 +128,12 @@ function changePosition(hand) {
 }
 
 // Main loop
-Leap.loop({ hand: function(hand) {
+Leap.loop({ frame: function(frame) {
+    var hands = frame.hands;
+
+    if (!hands.length) return;
+
+    var hand = frame.hands[0];
     var pointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
     var palmVel = hand.palmVelocity;
     var palmVelX = palmVel[0];
@@ -120,8 +142,9 @@ Leap.loop({ hand: function(hand) {
     
     if (gestureTimer) return;
 
-    if (pointing) changePosition(hand);
+    if (hands.length > 1) changeZoom(hand, hands[1]);
+    else if (pointing) changePosition(hand);
     else if (velMag > 100 && hand.grabStrength > 0.9) changeRotation(hand);
     
 
-}}).use('screenPosition');
+}});
