@@ -93,15 +93,14 @@ function changeRotation(hand, xd, yd) {
     setTimeout(() => gestureTimer = false , 50 );
 }
 
-function changeZoom(hand1, hand2, direction) {
+function changeZoom(hand1, hand2, change) {
     var zoomChange;
     if (hand1 && hand2) {
         if (hand1.palmVelocity[0] > 25) zoomChange = 0.1;
         else if (hand1.palmVelocity[0] < -25) zoomChange = -0.1
     }
     else {
-        if (direction) zoomChange = 0.5;
-        else zoomChange = -0.5
+        zoomChange = change;
     }
     if ((zoomChange !== 0) && ((panorama.getZoom() + zoomChange) > 0)) {
         panorama.setZoom(panorama.getZoom() + zoomChange);
@@ -203,6 +202,7 @@ var processSpeech = function(transcript) {
         changeRotation(null, 0, -25);
     }
 
+    // 
     else if (userSaid(transcript, ["move forward"])) {
 
     }
@@ -219,13 +219,26 @@ var processSpeech = function(transcript) {
 
     }
 
+    // zoom
+    else if (userSaid(transcript, ["zoom in a little"])) {
+        changeZoom(null, null, 0.1);
+    }
+    else if (userSaid(transcript, ["zoom out a little"])) {
+        changeZoom(null, null, -0.1);
+    }
+    else if (userSaid(transcript, ["zoom in a lot"])) {
+        changeZoom(null, null, 0.5);
+    }
+    else if (userSaid(transcript, ["zoom out a lot"])) {
+        changeZoom(null, null, -0.5);
+    }
     else if (userSaid(transcript, ["zoom in"])) {
-
+        changeZoom(null, null, 0.25);
     }
-
     else if (userSaid(transcript, ["zoom out"])) {
-
+        changeZoom(null, null, -0.25);
     }
+
 
     return processed;
 };
