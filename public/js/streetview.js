@@ -179,48 +179,48 @@ var processSpeech = function(transcript) {
     console.log(transcript);
 
     // rotations
-    if (userSaid(transcript, ["rotate right up", "rotate upright", "rotate right and up", "rotate up and right"])) {
+    if (userSaid(transcript, ["rotate right up", "rotate upright", "rotate right and up", "rotate up and right", "turn right up", "turn upright", "turn right and up", "turn up and right"])) {
         changeRotation(null, 90, 25);
     } 
-    else if (userSaid(transcript, ["rotate write down", "rotate downright", "rotate right and down", "rotate down and right"])) {
+    else if (userSaid(transcript, ["rotate write down", "rotate downright", "rotate right and down", "rotate down and right", "turn write down", "turn downright", "turn right and down", "turn down and right"])) {
         changeRotation(null, 90, -25);
     }
-    else if (userSaid(transcript, ["rotate left up", "rotate up left", "rotate left and up", "rotate up and left"])) {
+    else if (userSaid(transcript, ["rotate left up", "rotate up left", "rotate left and up", "rotate up and left", "turn left up", "turn up left", "turn left and up", "turn up and left"])) {
         changeRotation(null, -90, 25);
     }
-    else if (userSaid(transcript, ["rotate left down", "rotate down left", "rotate left and down", "rotate down and left"])) {
+    else if (userSaid(transcript, ["rotate left down", "rotate down left", "rotate left and down", "rotate down and left", "turn left down", "turn down left", "turn left and down", "turn down and left"])) {
         changeRotation(null, -90, -25);
     }
-    else if (userSaid(transcript, ["rotate right"])) {
+    else if (userSaid(transcript, ["rotate right", "turn right"])) {
         changeRotation(null, 90, 0);
     } 
-    else if (userSaid(transcript, ["rotate left"])) {
+    else if (userSaid(transcript, ["rotate left", "turn left"])) {
         changeRotation(null, -90, 0);
     }
-    else if (userSaid(transcript, ["rotate up"])) {
+    else if (userSaid(transcript, ["rotate up", "turn up"])) {
         changeRotation(null, 0, 25);
     }
-    else if (userSaid(transcript, ["rotate down"])) {
+    else if (userSaid(transcript, ["rotate down", "turn down"])) {
         changeRotation(null, 0, -25);
     }
 
     // do the move move
-    else if (userSaid(transcript, ["move forward", "moves forward"])) {
+    else if (userSaid(transcript, ["move forward", "moves forward", "go forward"])) {
         changePosition(null, 0);
     }
-    else if (userSaid(transcript, ["move backward", "moves backward"])) {
+    else if (userSaid(transcript, ["move backward", "moves backward", "go backward"])) {
         changePosition(null, 180);
     }
-    else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "moves slight right", "moves slightly right", "moves right slightly"])) {
+    else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "go slight right", "go slightly right", "go right slightly", "moves slight right", "moves slightly right", "moves right slightly"])) {
         changePosition(null, 45);
     }
-    else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "moves slight left", "moves slightly left", "moves left slightly"])) {
+    else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "go slight left", "go slightly left", "go left slightly", "moves slight left", "moves slightly left", "moves left slightly"])) {
         changePosition(null, -45);
     }
-    else if (userSaid(transcript, ["move right", "moves right"])) {
+    else if (userSaid(transcript, ["move right", "moves right", "go right",])) {
         changePosition(null, 90);
     }
-    else if (userSaid(transcript, ["move left", "moves left"])) {
+    else if (userSaid(transcript, ["move left", "moves left", "go left"])) {
         changePosition(null, -90);
     }
 
