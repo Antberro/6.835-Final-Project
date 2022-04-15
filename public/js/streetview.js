@@ -62,6 +62,9 @@ window.addEventListener('load', () => {
 });
 
 var cursorPosition;
+var lastAction;
+var interval;
+var continueAction = false;
 var gestureTimer = false;
 
 function changeRotation(hand, xd, yd) {
@@ -90,6 +93,7 @@ function changeRotation(hand, xd, yd) {
         heading: newHeading,
         pitch: newPitch
     });
+    lastAction = () => changeRotation(hand1, xd, yd);
     setTimeout(() => gestureTimer = false , 50 );
 }
 
@@ -105,6 +109,7 @@ function changeZoom(hand1, hand2, change) {
     if ((zoomChange !== 0) && ((panorama.getZoom() + zoomChange) > 0)) {
         panorama.setZoom(panorama.getZoom() + zoomChange);
         gestureTimer = true;
+        lastAction = () => changeZoom(hand1, hand2, change);
         setTimeout(() => gestureTimer = false , 50 );
     }
 
@@ -130,6 +135,7 @@ function changePosition(hand, change) {
     panorama.setPano(newPano);
 
     gestureTimer = true;
+    lastAction = () => changePosition(hand, change);
     setTimeout(() => gestureTimer = false , 50 );
 }
 
@@ -148,9 +154,22 @@ Leap.loop({ frame: function(frame) {
     
     if (gestureTimer) return;
 
-    if (hands.length > 1) changeZoom(hand, hands[1], null);
-    else if (pointing) changePosition(hand, null);
-    else if (velMag > 100 && hand.grabStrength > 0.9) changeRotation(hand, null);
+    if (hands.length > 1) {
+        changeZoom(hand, hands[1], null);
+        continueAction = false;
+    }
+    else if (pointing) {
+        changePosition(hand, null);
+        continueAction = false;
+    }
+    else if (velMag > 100 && hand.grabStrength > 0.9) {
+        changeRotation(hand, null);
+        continueAction = false;
+    }
+
+    if (!continueAction && interval) {
+        clearInterval(interval);
+    }
     
 
 }});
@@ -181,69 +200,103 @@ var processSpeech = function(transcript) {
     // rotations
     if (userSaid(transcript, ["rotate right up", "rotate upright", "rotate right and up", "rotate up and right", "turn right up", "turn upright", "turn right and up", "turn up and right"])) {
         changeRotation(null, 90, 25);
+        continueAction = false;
     } 
     else if (userSaid(transcript, ["rotate write down", "rotate downright", "rotate right and down", "rotate down and right", "turn write down", "turn downright", "turn right and down", "turn down and right"])) {
         changeRotation(null, 90, -25);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["rotate left up", "rotate up left", "rotate left and up", "rotate up and left", "turn left up", "turn up left", "turn left and up", "turn up and left"])) {
         changeRotation(null, -90, 25);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["rotate left down", "rotate down left", "rotate left and down", "rotate down and left", "turn left down", "turn down left", "turn left and down", "turn down and left"])) {
         changeRotation(null, -90, -25);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["rotate right", "turn right"])) {
         changeRotation(null, 90, 0);
+        continueAction = false;
     } 
     else if (userSaid(transcript, ["rotate left", "turn left"])) {
         changeRotation(null, -90, 0);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["rotate up", "turn up"])) {
         changeRotation(null, 0, 25);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["rotate down", "turn down"])) {
         changeRotation(null, 0, -25);
+        continueAction = false;
     }
 
     // do the move move
-    else if (userSaid(transcript, ["move forward", "moves forward", "go forward"])) {
+    else if (userSaid(transcript, ["move forward", "moves forward", "go forward", "move straight", "moves straight", "go straight"])) {
         changePosition(null, 0);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["move backward", "moves backward", "go backward"])) {
         changePosition(null, 180);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "go slight right", "go slightly right", "go right slightly", "moves slight right", "moves slightly right", "moves right slightly"])) {
         changePosition(null, 45);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "go slight left", "go slightly left", "go left slightly", "moves slight left", "moves slightly left", "moves left slightly"])) {
         changePosition(null, -45);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["move right", "moves right", "go right",])) {
         changePosition(null, 90);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["move left", "moves left", "go left"])) {
         changePosition(null, -90);
+        continueAction = false;
     }
 
     // zoom
     else if (userSaid(transcript, ["zoom in a little"])) {
         changeZoom(null, null, 0.1);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["zoom out a little"])) {
         changeZoom(null, null, -0.1);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["zoom in a lot"])) {
         changeZoom(null, null, 0.5);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["zoom out a lot"])) {
         changeZoom(null, null, -0.5);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["zoom in"])) {
         changeZoom(null, null, 0.25);
+        continueAction = false;
     }
     else if (userSaid(transcript, ["zoom out"])) {
         changeZoom(null, null, -0.25);
+        continueAction = false;
     }
 
+    // continue action 
+    else if (userSaid(transcript, ["continue", "keep"]) && lastAction && !continueAction) {
+        lastAction();
+        interval = setInterval(lastAction, 1000);
+        continueAction = true;
+    }
+
+    else if (userSaid(transcript, ["stop"]) && lastAction && continueAction) {
+        continueAction = false;
+    }
+
+    if (!continueAction) {
+        clearInterval(interval);
+    }
 
     return processed;
 };
