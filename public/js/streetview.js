@@ -74,7 +74,7 @@ function updateGestureUI(gestureType) {
 }
 
 function changeRotation(hand, xd, yd) {
-    gesture = 'ROTATE';
+    var newGesture = 'ROTATE';
     var xChange, yChange;
     if (hand) {
         var palmVelX = hand.palmVelocity[0];
@@ -102,17 +102,19 @@ function changeRotation(hand, xd, yd) {
     });
     lastAction = () => changeRotation(hand1, xd, yd);
     setTimeout(() => gestureTimer = false , 50 );
+    return newGesture;
 }
 
 function changeZoom(hand1, hand2, change) {
     var zoomChange;
+    var newGesture = "";
     if (hand1 && hand2) {
         if (hand1.palmVelocity[0] > 25) {
-            gesture = 'ZOOM IN';
+            newGesture = 'ZOOM IN';
             zoomChange = 0.1;
         }
         else if (hand1.palmVelocity[0] < -25) {
-            gesture = 'ZOOM OUT';
+            newGesture = 'ZOOM OUT';
             zoomChange = -0.1;
         }
     }
@@ -125,11 +127,11 @@ function changeZoom(hand1, hand2, change) {
         lastAction = () => changeZoom(hand1, hand2, change);
         setTimeout(() => gestureTimer = false , 50 );
     }
-
+    return newGesture;
 }
 
 function changePosition(hand, change) {
-    gesture = 'MOVE';
+    var newGesture = 'MOVE';
     var currHeading = panorama.getPov().heading;
 
     if (hand) currHeading +=  Math.atan(hand.direction[0] / hand.direction[2]) * 180 / Math.PI;
@@ -151,6 +153,7 @@ function changePosition(hand, change) {
     gestureTimer = true;
     lastAction = () => changePosition(hand, change);
     setTimeout(() => gestureTimer = false , 50 );
+    return newGesture;
 }
 
 function myMod(x, base) {
@@ -159,7 +162,7 @@ function myMod(x, base) {
 
 function changePosition2(hand, change) {
     threshold = 50;
-    gesture = 'MOVE';
+    var newGesture = 'MOVE';
     var currHeading = panorama.getPov().heading;
 
     // if (hand) currHeading +=  Math.atan(hand.direction[0] / hand.direction[2]) * 180 / Math.PI;
@@ -179,6 +182,7 @@ function changePosition2(hand, change) {
     gestureTimer = true;
     lastAction = () => changePosition(hand, change);
     setTimeout(() => gestureTimer = false , 50 );
+    return newGesture;
 }
 
 // Main loop
@@ -196,24 +200,27 @@ Leap.loop({ frame: function(frame) {
     
     if (gestureTimer) return;
 
+    var newGesture = "";
+
     if (hands.length > 1 && hand.grabStrength > 0.9 && hands[1].grabStrength > 0.9) {
-        changeZoom(hand, hands[1], null);
+        newGesture = changeZoom(hand, hands[1], null);
         continueAction = false;
     }
     else if (pointing) {
-        changePosition(hand, null);
+        newGesture = changePosition(hand, null);
         // changePosition2(hand, null);
         continueAction = false;
     }
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
-        changeRotation(hand, null);
+        newGesture = changeRotation(hand, null);
         continueAction = false;
     }
 
-    if (!continueAction && interval) {
+    if (!continueAction && interval && (newGesture !== gesture)) {
         clearInterval(interval);
     }
 
+    gesture = newGesture;
     console.log(gesture);
     updateGestureUI(gesture);
     gesture = '';
