@@ -26,16 +26,18 @@
     </head>
     <body>
         <h1>Multimodal Street View</h1>
+        <div id="gesture-container">DETECTED GESTURE: </div>
         <div id="pano"></div>
 
         <!-- <svg id="cursor" x="100" y="100">
             <circle r="40" stroke="black" stroke-width="4" fill="black" />
         </svg> -->
-        <div id="cursor"></div>
+        <!-- <div id="cursor"></div> -->
 
         <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+        <!-- api key = AIzaSyDdEJP7o_u4WuAWb1MoA1NTxqptyT3jcN8 -->
         <script
-          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDdEJP7o_u4WuAWb1MoA1NTxqptyT3jcN8&callback=initStreetView&v=weekly"
+          src="https://maps.googleapis.com/maps/api/js?callback=initStreetView&v=weekly"
           async defer>
         </script>
     </body>
