@@ -185,7 +185,7 @@ function changePosition2(hand, change) {
     return newGesture;
 }
 
-// Main loop
+// Gesture loop
 Leap.loop({ frame: function(frame) {
     var hands = frame.hands;
 
@@ -202,25 +202,25 @@ Leap.loop({ frame: function(frame) {
 
     console.log(hand.pitch());
 
-    var newGesture = "";
+    var newGesture = gesture;
 
     if (hands.length > 1 && hand.grabStrength > 0.9 && hands[1].grabStrength > 0.9) {
         newGesture = changeZoom(hand, hands[1], null);
-        continueAction = false;
+        if (newGesture !== gesture) continueAction = false;
     }
     else if (pointing) {
         newGesture = changePosition(hand, null);
         // changePosition2(hand, null);
-        continueAction = false;
+        if (newGesture !== gesture) continueAction = false;
     }
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
         newGesture = changeRotation(hand, null);
-        continueAction = false;
+        if (newGesture !== gesture) continueAction = false;
     }
     // stop gesture
     else if (hand.pitch() > 1 && interval) {
         newGesture = "STOP";
-        continueAction = false;
+        if (newGesture !== gesture) continueAction = false;
     }
 
     // new gesture overwrites
@@ -232,18 +232,10 @@ Leap.loop({ frame: function(frame) {
     gesture = newGesture;
     // console.log(gesture);
     updateGestureUI(gesture);
-    gesture = '';
-    
-
 }});
 
 
-// processSpeech(transcript)
-//  Is called anytime speech is recognized by the Web Speech API
-// Input: 
-//    transcript, a string of possibly multiple words that were recognized
-// Output: 
-//    processed, a boolean indicating whether the system reacted to the speech or not
+// speech loop
 var processSpeech = function(transcript) {
     // Helper function to detect if any commands appear in a string
     var userSaid = function(str, commands) {
