@@ -70,7 +70,7 @@ var gestureTimer = false;
 
 function updateGestureUI(gestureType) {
     let display = document.getElementById('gesture-container');
-    display.textContent = 'DETECTED GESTURE: ' + gestureType;
+    display.textContent = 'DETECTED COMMAND: ' + gestureType;
 }
 
 function changeRotation(hand, xd, yd) {
@@ -215,13 +215,19 @@ Leap.loop({ frame: function(frame) {
         newGesture = changeRotation(hand, null);
         continueAction = false;
     }
+    // stop gesture
+    else if (Math.abs(hand.palmNormal[0]) < 0.1 && interval) {
+        newGesture = "STOP";
+        continueAction = false;
+    }
 
+    // new gesture overwrites
     if (!continueAction && interval && (newGesture !== gesture)) {
         clearInterval(interval);
     }
 
     gesture = newGesture;
-    console.log(gesture);
+    // console.log(gesture);
     updateGestureUI(gesture);
     gesture = '';
     
@@ -255,106 +261,106 @@ var processSpeech = function(transcript) {
     if (userSaid(transcript, ["rotate right up", "rotate upright", "rotate right and up", "rotate up and right", "turn right up", "turn upright", "turn right and up", "turn up and right"])) {
         changeRotation(null, 90, 25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     } 
     else if (userSaid(transcript, ["rotate write down", "rotate downright", "rotate right and down", "rotate down and right", "turn write down", "turn downright", "turn right and down", "turn down and right"])) {
         changeRotation(null, 90, -25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     }
     else if (userSaid(transcript, ["rotate left up", "rotate up left", "rotate left and up", "rotate up and left", "turn left up", "turn up left", "turn left and up", "turn up and left"])) {
         changeRotation(null, -90, 25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     }
     else if (userSaid(transcript, ["rotate left down", "rotate down left", "rotate left and down", "rotate down and left", "turn left down", "turn down left", "turn left and down", "turn down and left"])) {
         changeRotation(null, -90, -25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     }
     else if (userSaid(transcript, ["rotate right", "turn right"])) {
         changeRotation(null, 90, 0);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     } 
     else if (userSaid(transcript, ["rotate left", "turn left"])) {
         changeRotation(null, -90, 0);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     }
     else if (userSaid(transcript, ["rotate up", "turn up"])) {
         changeRotation(null, 0, 25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     }
     else if (userSaid(transcript, ["rotate down", "turn down"])) {
         changeRotation(null, 0, -25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
     }
 
     // do the move move
     else if (userSaid(transcript, ["move forward", "moves forward", "go forward", "move straight", "moves straight", "go straight"])) {
         changePosition(null, 0);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
     }
     else if (userSaid(transcript, ["move backward", "moves backward", "go backward"])) {
         changePosition(null, 180);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
     }
     else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "go slight right", "go slightly right", "go right slightly", "moves slight right", "moves slightly right", "moves right slightly"])) {
         changePosition(null, 45);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
     }
     else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "go slight left", "go slightly left", "go left slightly", "moves slight left", "moves slightly left", "moves left slightly"])) {
         changePosition(null, -45);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
     }
     else if (userSaid(transcript, ["move right", "moves right", "go right",])) {
         changePosition(null, 90);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
     }
     else if (userSaid(transcript, ["move left", "moves left", "go left"])) {
         changePosition(null, -90);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
     }
 
     // zoom
     else if (userSaid(transcript, ["zoom in a little"])) {
         changeZoom(null, null, 0.1);
         continueAction = false;
-        updateGestureUI('ZOOM IN');
+        gesture = 'ZOOM IN';
     }
     else if (userSaid(transcript, ["zoom out a little"])) {
         changeZoom(null, null, -0.1);
         continueAction = false;
-        updateGestureUI('ZOOM OUT');
+        gesture = 'ZOOM OUT';
     }
     else if (userSaid(transcript, ["zoom in a lot"])) {
         changeZoom(null, null, 0.5);
         continueAction = false;
-        updateGestureUI('ZOOM IN');
+        gesture = 'ZOOM IN';
     }
     else if (userSaid(transcript, ["zoom out a lot"])) {
         changeZoom(null, null, -0.5);
         continueAction = false;
-        updateGestureUI('ZOOM OUT');
+        gesture = 'ZOOM OUT';
     }
     else if (userSaid(transcript, ["zoom in"])) {
         changeZoom(null, null, 0.25);
         continueAction = false;
-        updateGestureUI('ZOOM IN');
+        gesture = 'ZOOM IN';
     }
     else if (userSaid(transcript, ["zoom out"])) {
         changeZoom(null, null, -0.25);
         continueAction = false;
-        updateGestureUI('ZOOM OUT');
+        gesture = 'ZOOM OUT';
     }
 
     // continue action 
@@ -366,11 +372,14 @@ var processSpeech = function(transcript) {
 
     else if (userSaid(transcript, ["stop"]) && lastAction && continueAction) {
         continueAction = false;
+        gesture = 'STOP';
     }
 
     if (!continueAction) {
         clearInterval(interval);
     }
+
+    updateGestureUI(gesture);
 
     return processed;
 };
