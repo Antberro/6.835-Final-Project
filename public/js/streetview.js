@@ -68,6 +68,12 @@ var interval;
 var continueAction = false;
 var gestureTimer = false;
 
+var moveMultiplier = 1;
+var rotateMultiplier = 1;
+var zoomInMultiplier = 1;
+var zoomOutMultiplier = 1;
+var continueTimeout = 1000;
+
 function updateGestureUI(gestureType) {
     let display = document.getElementById('gesture-container');
     display.textContent = 'DETECTED COMMAND: ' + gestureType;
@@ -221,7 +227,7 @@ Leap.loop({ frame: function(frame) {
     // continue gesture
     else if (hand.pitch() < -1 && lastAction && !continueAction) {
         lastAction();
-        interval = setInterval(lastAction, 1000);
+        interval = setInterval(lastAction, continueTimeout);
         continueAction = true;
     }
     // stop gesture
@@ -385,10 +391,22 @@ var processSpeech = function(transcript) {
         processed = true;
     }
 
+    // faster/slower
+    else if (userSaid(transcript, ["faster"]) && continueAction) {
+        clearInterval(interval);
+        continueTimeout /= 1.5;
+        interval = setInterval(lastAction, continueTimeout);
+    }
+    else if (userSaid(transcript, ["slower"]) && continueAction) {
+        clearInterval(interval);
+        continueTimeout *= 1.5;
+        interval = setInterval(lastAction, continueTimeout);
+    }
+
     // continue  
     else if (userSaid(transcript, ["continue", "keep"]) && lastAction && !continueAction) {
         lastAction();
-        interval = setInterval(lastAction, 1000);
+        interval = setInterval(lastAction, continueTimeout);
         continueAction = true;
     }
 
