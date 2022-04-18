@@ -200,22 +200,29 @@ Leap.loop({ frame: function(frame) {
     
     if (gestureTimer) return;
 
-    console.log(hand.pitch());
-
     var newGesture = gesture;
 
+    // zoom gesture
     if (hands.length > 1 && hand.grabStrength > 0.9 && hands[1].grabStrength > 0.9) {
         newGesture = changeZoom(hand, hands[1], null);
         if (newGesture !== gesture) continueAction = false;
     }
+    // move gesture
     else if (pointing) {
         newGesture = changePosition(hand, null);
         // changePosition2(hand, null);
         if (newGesture !== gesture) continueAction = false;
     }
+    // rotate gesture
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
         newGesture = changeRotation(hand, null);
         if (newGesture !== gesture) continueAction = false;
+    }
+    // continue gesture
+    else if (hand.pitch() < -1 && lastAction && !continueAction) {
+        lastAction();
+        interval = setInterval(lastAction, 1000);
+        continueAction = true;
     }
     // stop gesture
     else if (hand.pitch() > 1 && interval) {
@@ -378,13 +385,14 @@ var processSpeech = function(transcript) {
         processed = true;
     }
 
-    // continue action 
+    // continue  
     else if (userSaid(transcript, ["continue", "keep"]) && lastAction && !continueAction) {
         lastAction();
         interval = setInterval(lastAction, 1000);
         continueAction = true;
     }
 
+    // stop 
     else if (userSaid(transcript, ["stop"]) && lastAction && continueAction) {
         continueAction = false;
         gesture = 'STOP';
