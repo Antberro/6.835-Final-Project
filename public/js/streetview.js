@@ -68,10 +68,7 @@ var interval;
 var continueAction = false;
 var gestureTimer = false;
 
-var moveMultiplier = 1;
-var rotateMultiplier = 1;
-var zoomInMultiplier = 1;
-var zoomOutMultiplier = 1;
+var moveTimeout = 1000;
 var continueTimeout = 1000;
 
 function updateGestureUI(gestureType) {
@@ -158,37 +155,12 @@ function changePosition(hand, change) {
 
     gestureTimer = true;
     lastAction = () => changePosition(hand, change);
-    setTimeout(() => gestureTimer = false , 50 );
+    setTimeout(() => gestureTimer = false , moveTimeout );
     return newGesture;
 }
 
 function myMod(x, base) {
     return ((x % base) + base) % base;
-}
-
-function changePosition2(hand, change) {
-    threshold = 50;
-    var newGesture = 'MOVE';
-    var currHeading = panorama.getPov().heading;
-
-    // if (hand) currHeading +=  Math.atan(hand.direction[0] / hand.direction[2]) * 180 / Math.PI;
-    // else currHeading += change;
-
-    var links = panorama.getLinks();
-
-    for (let link of links) {
-        rel_heading = myMod(link.heading - currHeading, 360);
-        link.rel_heading = rel_heading;
-    }
-
-    links = links.sort((a, b) => Math.abs(a.rel_heading - b.rel_heading));
-    var closestLink = links[0]; 
-    panorama.setPano(closestLink.pano);
-    
-    gestureTimer = true;
-    lastAction = () => changePosition(hand, change);
-    setTimeout(() => gestureTimer = false , 50 );
-    return newGesture;
 }
 
 // Gesture loop
@@ -216,7 +188,6 @@ Leap.loop({ frame: function(frame) {
     // move gesture
     else if (pointing) {
         newGesture = changePosition(hand, null);
-        // changePosition2(hand, null);
         if (newGesture !== gesture) continueAction = false;
     }
     // rotate gesture
@@ -401,6 +372,13 @@ var processSpeech = function(transcript) {
         clearInterval(interval);
         continueTimeout *= 1.5;
         interval = setInterval(lastAction, continueTimeout);
+    }
+
+    else if (userSaid(transcript, ["faster"]) && gesture === "MOVE") {
+        moveTimeout /= 1.5;
+    }
+    else if (userSaid(transcript, ["slower"]) && gesture === "MOVE") {
+        moveTimeout *= 1.5;
     }
 
     // continue  
