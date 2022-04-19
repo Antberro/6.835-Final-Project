@@ -9,18 +9,6 @@ function initStreetView() {
         document.getElementById('pano')
     );
 
-    var marker = new google.maps.Marker({
-        position: stata,
-        panorama,
-        title: "Hello World!",
-      });
-
-    marker.setMap(panorama);
-
-    panorama.addListener('click', (event) => {
-        console.log('click at ' + event.latLng);
-    });
-
     // set initial sv camera
     sv.getPanorama({ location: stata, radius: 50 }).then(processSVData);
 }
@@ -36,30 +24,17 @@ function processSVData({ data }) {
     panorama.setVisible(true);
 }
 
-function click(x, y) {
-    var ev = new MouseEvent('click', {
-        'view': window,
-        'bubbles': true,
-        'cancelable': true,
-        'screenX': x,
-        'screenY': y
-    });
-
-    el = document.elementFromPoint(x, y);
-
-    el.dispatchEvent(ev);
-
-    console.log(ev);
+function geocode(query) {
+    let geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode( { 'address': query}, function(results, status) {
+        if (status == 'OK') {
+            // console.log(results[0].geometry.location);
+            panorama.setPosition(new google.maps.LatLng(results[0].geometry.location));
+        } else {
+          console.log('Geocode was not successful for the following reason: ' + status);
+        }
+      });  
 }
-
-
-// Initialize cursor position
-window.addEventListener('load', () => {
-    let cursor = document.getElementById('cursor');
-    cursor.style.position = 'absolute';
-    cursor.style.left = 0;
-    cursor.style.top = 0;
-});
 
 var gesture = '';
 var cursorPosition;
@@ -284,6 +259,13 @@ var processSpeech = function(transcript) {
         continueAction = false;
         gesture = "ROTATE";
         processed = true;
+    }
+
+    // transport
+    else if (userSaid(transcript, ["go to", "move to", "transport to"])) {
+        let splitted = transcript.split("to");
+        let query = splitted[splitted.length - 1];
+        geocode(query);
     }
 
     // do the move move
