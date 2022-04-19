@@ -156,7 +156,9 @@ Leap.loop({ frame: function(frame) {
     if (!hands.length) return;
 
     var hand = frame.hands[0];
-    var pointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
+    var movePointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
+    var undoPointing = !(hand.indexFinger.extended) && hand.thumb.extended && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
+    var redoPointing = !(hand.indexFinger.extended) && !(hand.thumb.extended) && hand.pinky.extended && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
     var palmVel = hand.palmVelocity;
     var palmVelX = palmVel[0];
     var palmVelY = palmVel[1];
@@ -172,12 +174,26 @@ Leap.loop({ frame: function(frame) {
         if (newGesture !== gesture) continueAction = false;
     }
     // move gesture
-    else if (pointing) {
+    else if (movePointing) {
         let pointingDirection = hand.indexFinger.direction;
         if (pointingDirection[1] > 0.3) moveTimeout *= 1.1;
         else if (pointingDirection[1] < -0.3) moveTimeout /= 1.1;
         newGesture = changePosition(hand, null);
         if (newGesture !== gesture) continueAction = false;
+    }
+    // undo gesture
+    else if (undoPointing && undoPanos.length) {
+        redoPanos.push(panorama.getPano());
+        panorama.setPano(undoPanos.pop());
+        continueAction = false;
+        newGesture = 'UNDO';
+    }
+    // redo gesture
+    else if (redoPointing && redoPanos.length) {
+        undoPanos.push(panorama.getPano());
+        panorama.setPano(redoPanos.pop());
+        continueAction = false;
+        newGesture = 'REDO';
     }
     // rotate gesture
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
