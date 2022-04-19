@@ -162,6 +162,9 @@ Leap.loop({ frame: function(frame) {
     }
     // move gesture
     else if (pointing) {
+        let pointingDirection = hand.indexFinger.direction;
+        if (pointingDirection[1] > 0.3) moveTimeout *= 1.1;
+        else if (pointingDirection[1] < -0.3) moveTimeout /= 1.1;
         newGesture = changePosition(hand, null);
         if (newGesture !== gesture) continueAction = false;
     }
