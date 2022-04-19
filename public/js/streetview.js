@@ -9,18 +9,6 @@ function initStreetView() {
         document.getElementById('pano')
     );
 
-    var marker = new google.maps.Marker({
-        position: stata,
-        panorama,
-        title: "Hello World!",
-      });
-
-    marker.setMap(panorama);
-
-    panorama.addListener('click', (event) => {
-        console.log('click at ' + event.latLng);
-    });
-
     // set initial sv camera
     sv.getPanorama({ location: stata, radius: 50 }).then(processSVData);
 }
@@ -36,30 +24,17 @@ function processSVData({ data }) {
     panorama.setVisible(true);
 }
 
-function click(x, y) {
-    var ev = new MouseEvent('click', {
-        'view': window,
-        'bubbles': true,
-        'cancelable': true,
-        'screenX': x,
-        'screenY': y
-    });
-
-    el = document.elementFromPoint(x, y);
-
-    el.dispatchEvent(ev);
-
-    console.log(ev);
+function geocode(query) {
+    let geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode( { 'address': query}, function(results, status) {
+        if (status == 'OK') {
+            // console.log(results[0].geometry.location);
+            panorama.setPosition(new google.maps.LatLng(results[0].geometry.location));
+        } else {
+          console.log('Geocode was not successful for the following reason: ' + status);
+        }
+      });  
 }
-
-
-// Initialize cursor position
-window.addEventListener('load', () => {
-    let cursor = document.getElementById('cursor');
-    cursor.style.position = 'absolute';
-    cursor.style.left = 0;
-    cursor.style.top = 0;
-});
 
 var gesture = '';
 var cursorPosition;
@@ -68,13 +43,16 @@ var interval;
 var continueAction = false;
 var gestureTimer = false;
 
+var moveTimeout = 1000;
+var continueTimeout = 1000;
+
 function updateGestureUI(gestureType) {
     let display = document.getElementById('gesture-container');
-    display.textContent = 'DETECTED GESTURE: ' + gestureType;
+    display.textContent = 'DETECTED COMMAND: ' + gestureType;
 }
 
 function changeRotation(hand, xd, yd) {
-    gesture = 'ROTATE';
+    var newGesture = 'ROTATE';
     var xChange, yChange;
     if (hand) {
         var palmVelX = hand.palmVelocity[0];
@@ -102,17 +80,19 @@ function changeRotation(hand, xd, yd) {
     });
     lastAction = () => changeRotation(hand1, xd, yd);
     setTimeout(() => gestureTimer = false , 50 );
+    return newGesture;
 }
 
 function changeZoom(hand1, hand2, change) {
     var zoomChange;
+    var newGesture = "";
     if (hand1 && hand2) {
         if (hand1.palmVelocity[0] > 25) {
-            gesture = 'ZOOM IN';
+            newGesture = 'ZOOM IN';
             zoomChange = 0.1;
         }
         else if (hand1.palmVelocity[0] < -25) {
-            gesture = 'ZOOM OUT';
+            newGesture = 'ZOOM OUT';
             zoomChange = -0.1;
         }
     }
@@ -125,11 +105,11 @@ function changeZoom(hand1, hand2, change) {
         lastAction = () => changeZoom(hand1, hand2, change);
         setTimeout(() => gestureTimer = false , 50 );
     }
-
+    return newGesture;
 }
 
 function changePosition(hand, change) {
-    gesture = 'MOVE';
+    var newGesture = 'MOVE';
     var currHeading = panorama.getPov().heading;
 
     if (hand) currHeading +=  Math.atan(hand.direction[0] / hand.direction[2]) * 180 / Math.PI;
@@ -150,38 +130,15 @@ function changePosition(hand, change) {
 
     gestureTimer = true;
     lastAction = () => changePosition(hand, change);
-    setTimeout(() => gestureTimer = false , 50 );
+    setTimeout(() => gestureTimer = false , moveTimeout );
+    return newGesture;
 }
 
 function myMod(x, base) {
     return ((x % base) + base) % base;
 }
 
-function changePosition2(hand, change) {
-    threshold = 50;
-    gesture = 'MOVE';
-    var currHeading = panorama.getPov().heading;
-
-    // if (hand) currHeading +=  Math.atan(hand.direction[0] / hand.direction[2]) * 180 / Math.PI;
-    // else currHeading += change;
-
-    var links = panorama.getLinks();
-
-    for (let link of links) {
-        rel_heading = myMod(link.heading - currHeading, 360);
-        link.rel_heading = rel_heading;
-    }
-
-    links = links.sort((a, b) => Math.abs(a.rel_heading - b.rel_heading));
-    var closestLink = links[0]; 
-    panorama.setPano(closestLink.pano);
-    
-    gestureTimer = true;
-    lastAction = () => changePosition(hand, change);
-    setTimeout(() => gestureTimer = false , 50 );
-}
-
-// Main loop
+// Gesture loop
 Leap.loop({ frame: function(frame) {
     var hands = frame.hands;
 
@@ -196,38 +153,51 @@ Leap.loop({ frame: function(frame) {
     
     if (gestureTimer) return;
 
+    var newGesture = gesture;
+
+    // zoom gesture
     if (hands.length > 1 && hand.grabStrength > 0.9 && hands[1].grabStrength > 0.9) {
-        changeZoom(hand, hands[1], null);
-        continueAction = false;
+        newGesture = changeZoom(hand, hands[1], null);
+        if (newGesture !== gesture) continueAction = false;
     }
+    // move gesture
     else if (pointing) {
-        changePosition(hand, null);
-        // changePosition2(hand, null);
-        continueAction = false;
+        let pointingDirection = hand.indexFinger.direction;
+        if (pointingDirection[1] > 0.3) moveTimeout *= 1.1;
+        else if (pointingDirection[1] < -0.3) moveTimeout /= 1.1;
+        newGesture = changePosition(hand, null);
+        if (newGesture !== gesture) continueAction = false;
     }
+    // rotate gesture
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
-        changeRotation(hand, null);
-        continueAction = false;
+        newGesture = changeRotation(hand, null);
+        if (newGesture !== gesture) continueAction = false;
+    }
+    // continue gesture
+    else if (hand.pitch() < -1 && lastAction && !continueAction) {
+        lastAction();
+        interval = setInterval(lastAction, continueTimeout);
+        continueAction = true;
+    }
+    // stop gesture
+    else if (hand.pitch() > 1 && interval) {
+        newGesture = "STOP";
+        if (newGesture !== gesture) continueAction = false;
     }
 
-    if (!continueAction && interval) {
+    // new gesture overwrites
+    if (!continueAction && interval && (newGesture !== gesture)) {
         clearInterval(interval);
+        interval = null;
     }
 
-    console.log(gesture);
+    gesture = newGesture;
+    // console.log(gesture);
     updateGestureUI(gesture);
-    gesture = '';
-    
-
 }});
 
 
-// processSpeech(transcript)
-//  Is called anytime speech is recognized by the Web Speech API
-// Input: 
-//    transcript, a string of possibly multiple words that were recognized
-// Output: 
-//    processed, a boolean indicating whether the system reacted to the speech or not
+// speech loop
 var processSpeech = function(transcript) {
     // Helper function to detect if any commands appear in a string
     var userSaid = function(str, commands) {
@@ -248,122 +218,174 @@ var processSpeech = function(transcript) {
     if (userSaid(transcript, ["rotate right up", "rotate upright", "rotate right and up", "rotate up and right", "turn right up", "turn upright", "turn right and up", "turn up and right"])) {
         changeRotation(null, 90, 25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
     } 
     else if (userSaid(transcript, ["rotate write down", "rotate downright", "rotate right and down", "rotate down and right", "turn write down", "turn downright", "turn right and down", "turn down and right"])) {
         changeRotation(null, 90, -25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
     }
     else if (userSaid(transcript, ["rotate left up", "rotate up left", "rotate left and up", "rotate up and left", "turn left up", "turn up left", "turn left and up", "turn up and left"])) {
         changeRotation(null, -90, 25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
     }
     else if (userSaid(transcript, ["rotate left down", "rotate down left", "rotate left and down", "rotate down and left", "turn left down", "turn down left", "turn left and down", "turn down and left"])) {
         changeRotation(null, -90, -25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
     }
     else if (userSaid(transcript, ["rotate right", "turn right"])) {
         changeRotation(null, 90, 0);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
     } 
     else if (userSaid(transcript, ["rotate left", "turn left"])) {
         changeRotation(null, -90, 0);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
     }
     else if (userSaid(transcript, ["rotate up", "turn up"])) {
         changeRotation(null, 0, 25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
     }
     else if (userSaid(transcript, ["rotate down", "turn down"])) {
         changeRotation(null, 0, -25);
         continueAction = false;
-        updateGestureUI('ROTATE');
+        gesture = "ROTATE";
+        processed = true;
+    }
+
+    // transport
+    else if (userSaid(transcript, ["go to", "move to", "transport to"])) {
+        let splitted = transcript.split("to");
+        let query = splitted[splitted.length - 1];
+        geocode(query);
     }
 
     // do the move move
     else if (userSaid(transcript, ["move forward", "moves forward", "go forward", "move straight", "moves straight", "go straight"])) {
         changePosition(null, 0);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
+        processed = true;
     }
-    else if (userSaid(transcript, ["move backward", "moves backward", "go backward"])) {
+    else if (userSaid(transcript, ["move backward", "moves backward", "go backward", "go back", "move back"])) {
         changePosition(null, 180);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
+        processed = true;
     }
     else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "go slight right", "go slightly right", "go right slightly", "moves slight right", "moves slightly right", "moves right slightly"])) {
         changePosition(null, 45);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
+        processed = true;
     }
     else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "go slight left", "go slightly left", "go left slightly", "moves slight left", "moves slightly left", "moves left slightly"])) {
         changePosition(null, -45);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
+        processed = true;
     }
     else if (userSaid(transcript, ["move right", "moves right", "go right",])) {
         changePosition(null, 90);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
+        processed = true;
     }
     else if (userSaid(transcript, ["move left", "moves left", "go left"])) {
         changePosition(null, -90);
         continueAction = false;
-        updateGestureUI('MOVE');
+        gesture = "MOVE";
+        processed = true;
     }
 
     // zoom
     else if (userSaid(transcript, ["zoom in a little"])) {
         changeZoom(null, null, 0.1);
         continueAction = false;
-        updateGestureUI('ZOOM IN');
+        gesture = 'ZOOM IN';
+        processed = true;
     }
     else if (userSaid(transcript, ["zoom out a little"])) {
         changeZoom(null, null, -0.1);
         continueAction = false;
-        updateGestureUI('ZOOM OUT');
+        gesture = 'ZOOM OUT';
+        processed = true;
     }
     else if (userSaid(transcript, ["zoom in a lot"])) {
         changeZoom(null, null, 0.5);
         continueAction = false;
-        updateGestureUI('ZOOM IN');
+        gesture = 'ZOOM IN';
+        processed = true;
     }
     else if (userSaid(transcript, ["zoom out a lot"])) {
         changeZoom(null, null, -0.5);
         continueAction = false;
-        updateGestureUI('ZOOM OUT');
+        gesture = 'ZOOM OUT';
+        processed = true;
     }
     else if (userSaid(transcript, ["zoom in"])) {
         changeZoom(null, null, 0.25);
         continueAction = false;
-        updateGestureUI('ZOOM IN');
+        gesture = 'ZOOM IN';
+        processed = true;
     }
     else if (userSaid(transcript, ["zoom out"])) {
         changeZoom(null, null, -0.25);
         continueAction = false;
-        updateGestureUI('ZOOM OUT');
+        gesture = 'ZOOM OUT';
+        processed = true;
     }
 
-    // continue action 
+    // faster/slower
+    else if (userSaid(transcript, ["faster"]) && continueAction) {
+        clearInterval(interval);
+        continueTimeout /= 1.5;
+        interval = setInterval(lastAction, continueTimeout);
+    }
+    else if (userSaid(transcript, ["slower"]) && continueAction) {
+        clearInterval(interval);
+        continueTimeout *= 1.5;
+        interval = setInterval(lastAction, continueTimeout);
+    }
+
+    else if (userSaid(transcript, ["faster"]) && gesture === "MOVE") {
+        moveTimeout /= 1.5;
+    }
+    else if (userSaid(transcript, ["slower"]) && gesture === "MOVE") {
+        moveTimeout *= 1.5;
+    }
+
+    // continue  
     else if (userSaid(transcript, ["continue", "keep"]) && lastAction && !continueAction) {
         lastAction();
-        interval = setInterval(lastAction, 1000);
+        interval = setInterval(lastAction, continueTimeout);
         continueAction = true;
     }
 
+    // stop 
     else if (userSaid(transcript, ["stop"]) && lastAction && continueAction) {
         continueAction = false;
+        gesture = 'STOP';
+        processed = true;
     }
 
-    if (!continueAction) {
+    if (!continueAction && interval) {
         clearInterval(interval);
+        interval = null;
     }
+
+    if (processed) updateGestureUI(gesture);
 
     return processed;
 };
