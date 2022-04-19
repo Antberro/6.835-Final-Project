@@ -275,7 +275,7 @@ var processSpeech = function(transcript) {
         gesture = "MOVE";
         processed = true;
     }
-    else if (userSaid(transcript, ["move backward", "moves backward", "go backward"])) {
+    else if (userSaid(transcript, ["move backward", "moves backward", "go backward", "go back", "move back"])) {
         changePosition(null, 180);
         continueAction = false;
         gesture = "MOVE";
