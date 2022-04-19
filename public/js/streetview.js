@@ -29,6 +29,8 @@ function geocode(query) {
     geocoder.geocode( { 'address': query}, function(results, status) {
         if (status == 'OK') {
             // console.log(results[0].geometry.location);
+            undoPanos.push(panorama.getPano());
+            redoPanos = [];
             panorama.setPosition(new google.maps.LatLng(results[0].geometry.location));
         } else {
           console.log('Geocode was not successful for the following reason: ' + status);
@@ -42,6 +44,9 @@ var lastAction;
 var interval;
 var continueAction = false;
 var gestureTimer = false;
+
+var undoPanos = [];
+var redoPanos = [];
 
 var moveTimeout = 1000;
 var continueTimeout = 1000;
@@ -74,6 +79,8 @@ function changeRotation(hand, xd, yd) {
     if (newPitch >= 90) newPitch = 90;
     else if (newPitch <= -90) newPitch = -90;
     gestureTimer = true;
+    undoPanos.push(panorama.getPano());
+    redoPanos = [];
     panorama.setPov({
         heading: newHeading,
         pitch: newPitch
@@ -100,6 +107,8 @@ function changeZoom(hand1, hand2, change) {
         zoomChange = change;
     }
     if ((zoomChange !== 0) && ((panorama.getZoom() + zoomChange) > 0)) {
+        undoPanos.push(panorama.getPano());
+        redoPanos = [];
         panorama.setZoom(panorama.getZoom() + zoomChange);
         gestureTimer = true;
         lastAction = () => changeZoom(hand1, hand2, change);
@@ -126,6 +135,8 @@ function changePosition(hand, change) {
     links = links.sort((obj1, obj2) => obj1.diff - obj2.diff);
 
     var newPano = links[0].pano;
+    undoPanos.push(panorama.getPano());
+    redoPanos = [];
     panorama.setPano(newPano);
 
     gestureTimer = true;
@@ -269,6 +280,9 @@ var processSpeech = function(transcript) {
         let splitted = transcript.split("to");
         let query = splitted[splitted.length - 1];
         geocode(query);
+        continueAction = false;
+        gesture = "MOVE";
+        processed = true;
     }
 
     // do the move move
@@ -364,6 +378,22 @@ var processSpeech = function(transcript) {
     }
     else if (userSaid(transcript, ["slower"]) && gesture === "MOVE") {
         moveTimeout *= 1.5;
+    }
+
+    // undo/redo
+    else if (userSaid(transcript, ["undo"]) && undoPanos.length) {
+        redoPanos.push(panorama.getPano());
+        panorama.setPano(undoPanos.pop());
+        continueAction = false;
+        gesture = 'UNDO';
+        processed = true;
+    }
+    else if (userSaid(transcript, ["redo"]) && redoPanos.length) {
+        undoPanos.push(panorama.getPano());
+        panorama.setPano(redoPanos.pop());
+        continueAction = false;
+        gesture = 'REDO';
+        processed = true;
     }
 
     // continue  
