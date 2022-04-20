@@ -1,7 +1,7 @@
 let panorama;
 
 function initStreetView() {
-    const stata = { lat: 42.362059, lng: -71.090931 };
+    const starting = { lat: 42.359032, lng: -71.093580 };
     const sv = new window.google.maps.StreetViewService();
 
     // set up panorama viewer
@@ -10,7 +10,7 @@ function initStreetView() {
     );
 
     // set initial sv camera
-    sv.getPanorama({ location: stata, radius: 50 }).then(processSVData);
+    sv.getPanorama({ location: starting, radius: 50 }).then(processSVData);
 }
 
 function processSVData({ data }) {
@@ -29,6 +29,8 @@ function geocode(query) {
     geocoder.geocode( { 'address': query}, function(results, status) {
         if (status == 'OK') {
             // console.log(results[0].geometry.location);
+            let currPano = panorama.getPano();
+            undoPanos.push(() => panorama.setPano(currPano));
             panorama.setPosition(new google.maps.LatLng(results[0].geometry.location));
         } else {
           console.log('Geocode was not successful for the following reason: ' + status);
@@ -42,6 +44,8 @@ var lastAction;
 var interval;
 var continueAction = false;
 var gestureTimer = false;
+
+var undoPanos = [];
 
 var moveTimeout = 1000;
 var continueTimeout = 1000;
@@ -67,13 +71,15 @@ function changeRotation(hand, xd, yd) {
         xChange = xd;
         yChange = yd;
     }
-    var newHeading = panorama.getPov().heading + xChange;
+    var pov = panorama.getPov()
+    var newHeading = pov.heading + xChange;
     if (newHeading >= 360) newHeading -= 360;
     else if (newHeading < 0) newHeading += 360;
-    var newPitch = panorama.getPov().pitch + yChange;
+    var newPitch = pov.pitch + yChange;
     if (newPitch >= 90) newPitch = 90;
     else if (newPitch <= -90) newPitch = -90;
     gestureTimer = true;
+    undoPanos.push(() => panorama.setPov({heading: pov.heading, pitch: pov.pitch}));
     panorama.setPov({
         heading: newHeading,
         pitch: newPitch
@@ -99,8 +105,10 @@ function changeZoom(hand1, hand2, change) {
     else {
         zoomChange = change;
     }
-    if ((zoomChange !== 0) && ((panorama.getZoom() + zoomChange) > 0)) {
-        panorama.setZoom(panorama.getZoom() + zoomChange);
+    let zoom = panorama.getZoom();
+    if ((zoomChange !== 0) && ((zoom + zoomChange) > 0)) {
+        undoPanos.push(() => panorama.setZoom(zoom));
+        panorama.setZoom(zoom + zoomChange);
         gestureTimer = true;
         lastAction = () => changeZoom(hand1, hand2, change);
         setTimeout(() => gestureTimer = false , 50 );
@@ -126,6 +134,8 @@ function changePosition(hand, change) {
     links = links.sort((obj1, obj2) => obj1.diff - obj2.diff);
 
     var newPano = links[0].pano;
+    let id = panorama.getPano();
+    undoPanos.push(() => panorama.setPano(id));
     panorama.setPano(newPano);
 
     gestureTimer = true;
@@ -145,7 +155,9 @@ Leap.loop({ frame: function(frame) {
     if (!hands.length) return;
 
     var hand = frame.hands[0];
-    var pointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
+    var movePointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
+    var undoPointing = !(hand.indexFinger.extended) && hand.thumb.extended && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
+    var redoPointing = !(hand.indexFinger.extended) && !(hand.thumb.extended) && hand.pinky.extended && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
     var palmVel = hand.palmVelocity;
     var palmVelX = palmVel[0];
     var palmVelY = palmVel[1];
@@ -161,12 +173,18 @@ Leap.loop({ frame: function(frame) {
         if (newGesture !== gesture) continueAction = false;
     }
     // move gesture
-    else if (pointing) {
+    else if (movePointing) {
         let pointingDirection = hand.indexFinger.direction;
         if (pointingDirection[1] > 0.3) moveTimeout *= 1.1;
         else if (pointingDirection[1] < -0.3) moveTimeout /= 1.1;
         newGesture = changePosition(hand, null);
         if (newGesture !== gesture) continueAction = false;
+    }
+    // undo gesture
+    else if (undoPointing && undoPanos.length) {
+        undoPanos.pop()();
+        continueAction = false;
+        newGesture = 'UNDO';
     }
     // rotate gesture
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
@@ -269,6 +287,9 @@ var processSpeech = function(transcript) {
         let splitted = transcript.split("to");
         let query = splitted[splitted.length - 1];
         geocode(query);
+        continueAction = false;
+        gesture = "MOVE";
+        processed = true;
     }
 
     // do the move move
@@ -364,6 +385,14 @@ var processSpeech = function(transcript) {
     }
     else if (userSaid(transcript, ["slower"]) && gesture === "MOVE") {
         moveTimeout *= 1.5;
+    }
+
+    // undo/redo
+    else if (userSaid(transcript, ["undo"]) && undoPanos.length) {
+        undoPanos.pop()();
+        continueAction = false;
+        gesture = 'UNDO';
+        processed = true;
     }
 
     // continue  
