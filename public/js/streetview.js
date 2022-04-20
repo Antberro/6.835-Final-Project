@@ -130,6 +130,8 @@ function changePosition(hand, change) {
 
     var links = panorama.getLinks();
 
+    if (!links.length) return "";
+
     for (let link of links) {
         // should double check this
         var diff1 = Math.abs(currHeading - link.heading);
