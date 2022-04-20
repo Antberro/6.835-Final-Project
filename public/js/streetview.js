@@ -330,6 +330,20 @@ var processSpeech = function(transcript) {
         processed = true;
     }
 
+    // move to next intersection
+    else if (userSaid(transcript, ["next block", "next street", "next intersection"])) {
+        gesture = "MOVE";
+        updateGestureUI(gesture);
+        (function repeat(){
+            setTimeout(function() {
+               changePosition(null, 0);
+               console.log(panorama.getLinks().length);
+               if (panorama.getLinks().length >= 4 || panorama.getLinks().length === 1) return;
+               repeat();
+           }, 200);
+         })();
+    }
+
     // zoom
     else if (userSaid(transcript, ["zoom in a little"])) {
         changeZoom(null, null, 0.1);
