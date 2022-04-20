@@ -84,7 +84,7 @@ function changeRotation(hand, xd, yd) {
         heading: newHeading,
         pitch: newPitch
     });
-    lastAction = () => changeRotation(hand1, xd, yd);
+    lastAction = () => changeRotation(hand, xd, yd);
     setTimeout(() => gestureTimer = false , 50 );
     return newGesture;
 }
