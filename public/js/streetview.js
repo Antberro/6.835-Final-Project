@@ -1,7 +1,7 @@
 let panorama;
 
 function initStreetView() {
-    const stata = { lat: 42.362059, lng: -71.090931 };
+    const starting = { lat: 42.359032, lng: -71.093580 };
     const sv = new window.google.maps.StreetViewService();
 
     // set up panorama viewer
@@ -10,7 +10,7 @@ function initStreetView() {
     );
 
     // set initial sv camera
-    sv.getPanorama({ location: stata, radius: 50 }).then(processSVData);
+    sv.getPanorama({ location: starting, radius: 50 }).then(processSVData);
 }
 
 function processSVData({ data }) {
