@@ -157,7 +157,6 @@ Leap.loop({ frame: function(frame) {
     var hand = frame.hands[0];
     var movePointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
     var undoPointing = !(hand.indexFinger.extended) && hand.thumb.extended && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
-    var redoPointing = !(hand.indexFinger.extended) && !(hand.thumb.extended) && hand.pinky.extended && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
     var palmVel = hand.palmVelocity;
     var palmVelX = palmVel[0];
     var palmVelY = palmVel[1];
