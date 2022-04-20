@@ -29,8 +29,8 @@ function geocode(query) {
     geocoder.geocode( { 'address': query}, function(results, status) {
         if (status == 'OK') {
             // console.log(results[0].geometry.location);
-            undoPanos.push(panorama.getPano());
-            redoPanos = [];
+            let currPano = panorama.getPano();
+            undoPanos.push(() => panorama.setPano(currPano));
             panorama.setPosition(new google.maps.LatLng(results[0].geometry.location));
         } else {
           console.log('Geocode was not successful for the following reason: ' + status);
@@ -46,7 +46,6 @@ var continueAction = false;
 var gestureTimer = false;
 
 var undoPanos = [];
-var redoPanos = [];
 
 var moveTimeout = 1000;
 var continueTimeout = 1000;
@@ -72,15 +71,15 @@ function changeRotation(hand, xd, yd) {
         xChange = xd;
         yChange = yd;
     }
-    var newHeading = panorama.getPov().heading + xChange;
+    var pov = panorama.getPov()
+    var newHeading = pov.heading + xChange;
     if (newHeading >= 360) newHeading -= 360;
     else if (newHeading < 0) newHeading += 360;
-    var newPitch = panorama.getPov().pitch + yChange;
+    var newPitch = pov.pitch + yChange;
     if (newPitch >= 90) newPitch = 90;
     else if (newPitch <= -90) newPitch = -90;
     gestureTimer = true;
-    undoPanos.push(panorama.getPano());
-    redoPanos = [];
+    undoPanos.push(() => panorama.setPov({heading: pov.heading, pitch: pov.pitch}));
     panorama.setPov({
         heading: newHeading,
         pitch: newPitch
@@ -106,10 +105,10 @@ function changeZoom(hand1, hand2, change) {
     else {
         zoomChange = change;
     }
-    if ((zoomChange !== 0) && ((panorama.getZoom() + zoomChange) > 0)) {
-        undoPanos.push(panorama.getPano());
-        redoPanos = [];
-        panorama.setZoom(panorama.getZoom() + zoomChange);
+    let zoom = panorama.getZoom();
+    if ((zoomChange !== 0) && ((zoom + zoomChange) > 0)) {
+        undoPanos.push(() => panorama.setZoom(zoom));
+        panorama.setZoom(zoom + zoomChange);
         gestureTimer = true;
         lastAction = () => changeZoom(hand1, hand2, change);
         setTimeout(() => gestureTimer = false , 50 );
@@ -135,8 +134,8 @@ function changePosition(hand, change) {
     links = links.sort((obj1, obj2) => obj1.diff - obj2.diff);
 
     var newPano = links[0].pano;
-    undoPanos.push(panorama.getPano());
-    redoPanos = [];
+    let id = panorama.getPano();
+    undoPanos.push(() => panorama.setPano(id));
     panorama.setPano(newPano);
 
     gestureTimer = true;
@@ -183,17 +182,9 @@ Leap.loop({ frame: function(frame) {
     }
     // undo gesture
     else if (undoPointing && undoPanos.length) {
-        redoPanos.push(panorama.getPano());
-        panorama.setPano(undoPanos.pop());
+        undoPanos.pop()();
         continueAction = false;
         newGesture = 'UNDO';
-    }
-    // redo gesture
-    else if (redoPointing && redoPanos.length) {
-        undoPanos.push(panorama.getPano());
-        panorama.setPano(redoPanos.pop());
-        continueAction = false;
-        newGesture = 'REDO';
     }
     // rotate gesture
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
@@ -398,17 +389,9 @@ var processSpeech = function(transcript) {
 
     // undo/redo
     else if (userSaid(transcript, ["undo"]) && undoPanos.length) {
-        redoPanos.push(panorama.getPano());
-        panorama.setPano(undoPanos.pop());
+        undoPanos.pop()();
         continueAction = false;
         gesture = 'UNDO';
-        processed = true;
-    }
-    else if (userSaid(transcript, ["redo"]) && redoPanos.length) {
-        undoPanos.push(panorama.getPano());
-        panorama.setPano(redoPanos.pop());
-        continueAction = false;
-        gesture = 'REDO';
         processed = true;
     }
 
