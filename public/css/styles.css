@@ -13,22 +13,13 @@ html, body {
 }
 
 #gesture-container {
-    margin: 0 auto;
-    padding: 5px;
-    background-color: royalblue;
+    margin: 10px auto;
+    padding: 15px;
+    background-color: #a6a6a6;
+    color: white;
+    border-radius: 0.25rem;
     width: 400px;
     height: 50px;
     display: flex;
     align-items: center;
-    /* justify-content: center; */
-}
-
-#cursor {
-    margin: 0;
-    padding: 0;
-    width: 10px;
-    height: 10px;
-    background-color: red;
-    z-index: 10;
-    position: absolute;
 }
