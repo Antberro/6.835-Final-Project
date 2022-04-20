@@ -186,12 +186,6 @@ Leap.loop({ frame: function(frame) {
         newGesture = changePosition(hand, null);
         if (newGesture !== gesture) continueAction = false;
     }
-    // undo gesture
-    else if (undoPointing && undoPanos.length) {
-        undoPanos.pop()();
-        continueAction = false;
-        newGesture = 'UNDO';
-    }
     // rotate gesture
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
         newGesture = changeRotation(hand, null);
@@ -207,6 +201,13 @@ Leap.loop({ frame: function(frame) {
     else if (hand.pitch() > 1 && interval) {
         newGesture = "STOP";
         if (newGesture !== gesture) continueAction = false;
+    }
+
+    // undo gesture
+    else if (undoPointing && undoPanos.length) {
+        undoPanos.pop()();
+        continueAction = false;
+        newGesture = 'UNDO';
     }
 
     // new gesture overwrites
