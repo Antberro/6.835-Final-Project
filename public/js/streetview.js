@@ -55,6 +55,11 @@ function updateGestureUI(gestureType) {
     display.textContent = 'DETECTED COMMAND: ' + gestureType;
 }
 
+function updateTranscriptUI(transcript) {
+    let display = document.getElementById('transcript-container');
+    display.textContent = 'TRANSCRIPT: ' + transcript;
+}
+
 function changeRotation(hand, xd, yd) {
     var newGesture = 'ROTATE';
     var xChange, yChange;
@@ -227,6 +232,7 @@ var processSpeech = function(transcript) {
     };
   
     transcript = transcript.toLowerCase();
+    updateTranscriptUI(transcript);
   
     var processed = false;
 
