@@ -241,31 +241,7 @@ var processSpeech = function(transcript) {
     console.log(transcript);
 
     // rotations
-    if (userSaid(transcript, ["rotate right up", "rotate upright", "rotate right and up", "rotate up and right", "turn right up", "turn upright", "turn right and up", "turn up and right"])) {
-        changeRotation(null, 90, 25);
-        continueAction = false;
-        gesture = "ROTATE";
-        processed = true;
-    } 
-    else if (userSaid(transcript, ["rotate write down", "rotate downright", "rotate right and down", "rotate down and right", "turn write down", "turn downright", "turn right and down", "turn down and right"])) {
-        changeRotation(null, 90, -25);
-        continueAction = false;
-        gesture = "ROTATE";
-        processed = true;
-    }
-    else if (userSaid(transcript, ["rotate left up", "rotate up left", "rotate left and up", "rotate up and left", "turn left up", "turn up left", "turn left and up", "turn up and left"])) {
-        changeRotation(null, -90, 25);
-        continueAction = false;
-        gesture = "ROTATE";
-        processed = true;
-    }
-    else if (userSaid(transcript, ["rotate left down", "rotate down left", "rotate left and down", "rotate down and left", "turn left down", "turn down left", "turn left and down", "turn down and left"])) {
-        changeRotation(null, -90, -25);
-        continueAction = false;
-        gesture = "ROTATE";
-        processed = true;
-    }
-    else if (userSaid(transcript, ["rotate right", "turn right"])) {
+    if (userSaid(transcript, ["rotate right", "turn right"])) {
         changeRotation(null, 90, 0);
         continueAction = false;
         gesture = "ROTATE";
