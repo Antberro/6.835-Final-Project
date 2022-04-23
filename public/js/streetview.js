@@ -107,10 +107,10 @@ function changeZoom(hand1, hand2, change) {
         }
     }
     else {
-        zoomChange = change;
+        zoomChange = change / 100.;
     }
     let zoom = panorama.getZoom();
-    if ((zoomChange !== 0) && ((zoom + zoomChange) > 0)) {
+    if ((zoomChange !== 0) && ((zoom + zoomChange) >= 0)) {
         undoPanos.push(() => panorama.setZoom(zoom));
         panorama.setZoom(zoom + zoomChange);
         gestureTimer = true;
@@ -388,13 +388,31 @@ var processSpeech = function(transcript) {
         processed = true;
     }
     else if (userSaid(transcript, ["zoom in"])) {
-        changeZoom(null, null, 0.25);
+        let zoom = 25;
+        if (userSaid(transcript, ["%"])) {
+            let splitted = transcript.split("%")[0].split(" ");
+            zoom = parseInt(splitted[splitted.length - 1]) || wordsToNumbers(splitted[splitted.length - 1]);
+        }
+        else if (userSaid(transcript, ["percent"]) ) {
+            let splitted = transcript.split("percent")[0].split(" ");
+            zoom = parseInt(splitted[splitted.length - 2]) || wordsToNumbers(splitted[splitted.length - 2]);
+        }
+        changeZoom(null, null, zoom);
         continueAction = false;
         gesture = 'ZOOM IN';
         processed = true;
     }
     else if (userSaid(transcript, ["zoom out"])) {
-        changeZoom(null, null, -0.25);
+        let zoom = 25;
+        if (userSaid(transcript, ["%"])) {
+            let splitted = transcript.split("%")[0].split(" ");
+            zoom = parseInt(splitted[splitted.length - 1]) || wordsToNumbers(splitted[splitted.length - 1]);
+        }
+        else if (userSaid(transcript, ["percent"]) ) {
+            let splitted = transcript.split("percent")[0].split(" ");
+            zoom = parseInt(splitted[splitted.length - 2]) || wordsToNumbers(splitted[splitted.length - 2]);
+        }
+        changeZoom(null, null, -zoom);
         continueAction = false;
         gesture = 'ZOOM OUT';
         processed = true;
