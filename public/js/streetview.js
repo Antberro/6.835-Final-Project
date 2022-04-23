@@ -39,7 +39,6 @@ function geocode(query) {
 }
 
 var gesture = '';
-var cursorPosition;
 var lastAction;
 var interval;
 var continueAction = false;
@@ -221,7 +220,6 @@ Leap.loop({ frame: function(frame) {
     updateGestureUI(gesture);
 }});
 
-
 // speech loop
 var processSpeech = function(transcript) {
     // Helper function to detect if any commands appear in a string
@@ -242,25 +240,61 @@ var processSpeech = function(transcript) {
 
     // rotations
     if (userSaid(transcript, ["rotate right", "turn right"])) {
-        changeRotation(null, 90, 0);
+        let degree = 90;
+        if (userSaid(transcript, ["°"])) {
+            let splitted = transcript.split("°")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 1]) || wordsToNumbers(splitted[splitted.length - 1]);
+        }
+        else if (userSaid(transcript, ["degrees"]) ) {
+            let splitted = transcript.split("degrees")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 2]) || wordsToNumbers(splitted[splitted.length - 2]);
+        }
+        changeRotation(null, degree, 0);
         continueAction = false;
         gesture = "ROTATE";
         processed = true;
     } 
     else if (userSaid(transcript, ["rotate left", "turn left"])) {
-        changeRotation(null, -90, 0);
+        let degree = 90;
+        if (userSaid(transcript, ["°"])) {
+            let splitted = transcript.split("°")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 1]) || wordsToNumbers(splitted[splitted.length - 1]);
+        }
+        else if (userSaid(transcript, ["degrees"]) ) {
+            let splitted = transcript.split("degrees")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 2]) || wordsToNumbers(splitted[splitted.length - 2]);
+        }
+        changeRotation(null, -degree, 0);
         continueAction = false;
         gesture = "ROTATE";
         processed = true;
     }
     else if (userSaid(transcript, ["rotate up", "turn up"])) {
-        changeRotation(null, 0, 25);
+        let degree = 25;
+        if (userSaid(transcript, ["°"])) {
+            let splitted = transcript.split("°")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 1]) || wordsToNumbers(splitted[splitted.length - 1]);
+        }
+        else if (userSaid(transcript, ["degrees"]) ) {
+            let splitted = transcript.split("degrees")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 2]) || wordsToNumbers(splitted[splitted.length - 2]);
+        }
+        changeRotation(null, 0, degree);
         continueAction = false;
         gesture = "ROTATE";
         processed = true;
     }
     else if (userSaid(transcript, ["rotate down", "turn down"])) {
-        changeRotation(null, 0, -25);
+        let degree = 25;
+        if (userSaid(transcript, ["°"])) {
+            let splitted = transcript.split("°")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 1]) || wordsToNumbers(splitted[splitted.length - 1]);
+        }
+        else if (userSaid(transcript, ["degrees"]) ) {
+            let splitted = transcript.split("degrees")[0].split(" ");
+            degree = parseInt(splitted[splitted.length - 2]) || wordsToNumbers(splitted[splitted.length - 2]);
+        }
+        changeRotation(null, 0, -degree);
         continueAction = false;
         gesture = "ROTATE";
         processed = true;
@@ -416,3 +450,5 @@ var processSpeech = function(transcript) {
 
     return processed;
 };
+
+window.initStreetView = initStreetView;
