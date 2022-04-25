@@ -47,6 +47,8 @@ var gestureTimer = false;
 var undoPanos = [];
 
 var moveTimeout = 1000;
+var rotateTimeout = 50;
+var zoomTimeout = 50;
 var continueTimeout = 1000;
 
 function updateGestureUI(gestureType) {
@@ -89,7 +91,7 @@ function changeRotation(hand, xd, yd) {
         pitch: newPitch
     });
     lastAction = () => changeRotation(hand, xd, yd);
-    setTimeout(() => gestureTimer = false , 50 );
+    setTimeout(() => gestureTimer = false , rotateTimeout );
     return newGesture;
 }
 
@@ -97,11 +99,12 @@ function changeZoom(hand1, hand2, change) {
     var zoomChange;
     var newGesture = "";
     if (hand1 && hand2) {
-        if (hand1.palmVelocity[0] > 25) {
+        let rightHand = hand1.type === "right" ? hand1 : hand2;
+        if (rightHand.palmVelocity[0] > 25) {
             newGesture = 'ZOOM IN';
             zoomChange = 0.1;
         }
-        else if (hand1.palmVelocity[0] < -25) {
+        else if (rightHand.palmVelocity[0] < -25) {
             newGesture = 'ZOOM OUT';
             zoomChange = -0.1;
         }
@@ -115,7 +118,7 @@ function changeZoom(hand1, hand2, change) {
         panorama.setZoom(zoom + zoomChange);
         gestureTimer = true;
         lastAction = () => changeZoom(hand1, hand2, change);
-        setTimeout(() => gestureTimer = false , 50 );
+        setTimeout(() => gestureTimer = false , zoomTimeout );
     }
     return newGesture;
 }
@@ -173,6 +176,7 @@ Leap.loop({ frame: function(frame) {
     var newGesture = gesture;
 
     // zoom gesture
+    console.log(hands.length);
     if (hands.length > 1 && hand.grabStrength > 0.9 && hands[1].grabStrength > 0.9) {
         newGesture = changeZoom(hand, hands[1], null);
         if (newGesture !== gesture) continueAction = false;
@@ -239,7 +243,7 @@ var processSpeech = function(transcript) {
     console.log(transcript);
 
     // rotations
-    if (userSaid(transcript, ["rotate right", "turn right"])) {
+    if (userSaid(transcript, ["rotate right", "turn right", "pan right", "tilt right"])) {
         let degree = 90;
         if (userSaid(transcript, ["°"])) {
             let splitted = transcript.split("°")[0].split(" ");
@@ -254,7 +258,7 @@ var processSpeech = function(transcript) {
         gesture = "ROTATE";
         processed = true;
     } 
-    else if (userSaid(transcript, ["rotate left", "turn left"])) {
+    else if (userSaid(transcript, ["rotate left", "turn left", "pan left", "tilt left"])) {
         let degree = 90;
         if (userSaid(transcript, ["°"])) {
             let splitted = transcript.split("°")[0].split(" ");
@@ -269,7 +273,7 @@ var processSpeech = function(transcript) {
         gesture = "ROTATE";
         processed = true;
     }
-    else if (userSaid(transcript, ["rotate up", "turn up"])) {
+    else if (userSaid(transcript, ["rotate up", "turn up", "pan up", "tilt up"])) {
         let degree = 25;
         if (userSaid(transcript, ["°"])) {
             let splitted = transcript.split("°")[0].split(" ");
@@ -284,7 +288,7 @@ var processSpeech = function(transcript) {
         gesture = "ROTATE";
         processed = true;
     }
-    else if (userSaid(transcript, ["rotate down", "turn down"])) {
+    else if (userSaid(transcript, ["rotate down", "turn down", "pan down", "tilt down"])) {
         let degree = 25;
         if (userSaid(transcript, ["°"])) {
             let splitted = transcript.split("°")[0].split(" ");
@@ -419,22 +423,26 @@ var processSpeech = function(transcript) {
     }
 
     // faster/slower
-    else if (userSaid(transcript, ["faster"]) && continueAction) {
-        clearInterval(interval);
-        continueTimeout /= 1.5;
-        interval = setInterval(lastAction, continueTimeout);
-    }
-    else if (userSaid(transcript, ["slower"]) && continueAction) {
-        clearInterval(interval);
-        continueTimeout *= 1.5;
-        interval = setInterval(lastAction, continueTimeout);
-    }
+    else if (userSaid(transcript, ["faster"])) {
+        if (continueAction) {
+            clearInterval(interval);
+            continueTimeout /= 1.5;
+            interval = setInterval(lastAction, continueTimeout);
+        }
+        else if (gesture === "MOVE") moveTimeout /= 1.5;
+        else if (gesture === "ROTATE") rotateTimeout /= 1.5;
+        else if (gesture === "ZOOM") zoomTimeout /= 1.5;
 
-    else if (userSaid(transcript, ["faster"]) && gesture === "MOVE") {
-        moveTimeout /= 1.5;
     }
-    else if (userSaid(transcript, ["slower"]) && gesture === "MOVE") {
-        moveTimeout *= 1.5;
+    else if (userSaid(transcript, ["slower"])) {
+        if (continueAction) {
+            clearInterval(interval);
+            continueTimeout *= 1.5;
+            interval = setInterval(lastAction, continueTimeout);
+        }
+        else if (gesture === "MOVE") moveTimeout *= 1.5;
+        else if (gesture === "ROTATE") rotateTimeout *= 1.5;
+        else if (gesture === "ZOOM") zoomTimeout *= 1.5;
     }
 
     // undo/redo
@@ -456,6 +464,12 @@ var processSpeech = function(transcript) {
     else if (userSaid(transcript, ["stop"]) && lastAction && continueAction) {
         continueAction = false;
         gesture = 'STOP';
+        processed = true;
+    }
+
+    // opening instructions tab
+    else if (userSaid(transcript, ["how to"])) {
+
         processed = true;
     }
 
