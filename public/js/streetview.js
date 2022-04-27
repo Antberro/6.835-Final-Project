@@ -176,7 +176,6 @@ Leap.loop({ frame: function(frame) {
     var newGesture = gesture;
 
     // zoom gesture
-    console.log(hands.length);
     if (hands.length > 1 && hand.grabStrength > 0.9 && hands[1].grabStrength > 0.9) {
         newGesture = changeZoom(hand, hands[1], null);
         if (newGesture !== gesture) continueAction = false;
@@ -469,7 +468,13 @@ var processSpeech = function(transcript) {
 
     // opening instructions tab
     else if (userSaid(transcript, ["how to"])) {
+        if (!document.getElementById('offcanvasRight').classList.contains("show")) $('#offcanvas-toggle').click();
+        processed = true;
+    }
 
+    // closing instructions tab
+    else if (userSaid(transcript, ["close"])) {
+        if (document.getElementById('offcanvasRight').classList.contains("show")) $('#offcanvas-toggle').click();
         processed = true;
     }
 
