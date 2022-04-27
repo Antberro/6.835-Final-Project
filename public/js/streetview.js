@@ -467,8 +467,18 @@ var processSpeech = function(transcript) {
     }
 
     // opening instructions tab
-    else if (userSaid(transcript, ["how to"])) {
-        if (!document.getElementById('offcanvasRight').classList.contains("show")) $('#offcanvas-toggle').click();
+    else if (userSaid(transcript, ["how to", "open"])) {
+        if (!document.getElementById('offcanvasRight').classList.contains("show")) {
+            $('#offcanvas-toggle').click();
+        }
+        if (userSaid(transcript, ["rotate", "tilt", "pan", "turn"])) $("#accordion-rotate-button").click(); 
+        else if (userSaid(transcript, ["move"])) $("#accordion-move-button").click(); 
+        else if (userSaid(transcript, ["zoom"])) $("#accordion-zoom-button").click(); 
+        else if (userSaid(transcript, ["continue", "keep"])) $("#accordion-continue-button").click(); 
+        else if (userSaid(transcript, ["stop"])) $("#accordion-stop-button").click(); 
+        else if (userSaid(transcript, ["change", "modify"])) $("#accordion-modify-button").click(); 
+        else if (userSaid(transcript, ["transport", "go to"])) $("#accordion-transport-button").click(); 
+        else if (userSaid(transcript, ["undo"])) $("#accordion-undo-button").click(); 
         processed = true;
     }
 
