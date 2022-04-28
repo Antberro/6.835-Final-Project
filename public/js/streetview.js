@@ -9,6 +9,8 @@ var interval;
 var continueAction = false;
 var gestureTimer = false;
 var undoPanos = [];
+var numVoiceErrors = 0;
+var maxVoiceErrors = 3;
 
 
 // constants
@@ -67,6 +69,14 @@ function updateGestureUI(gestureType) {
 function updateTranscriptUI(transcript) {
     let display = document.getElementById('transcript-container');
     display.textContent = 'TRANSCRIPT: ' + transcript;
+}
+
+function updateHandsInRangeUI(inRange) {
+    let border = document.getElementById('pano-border');
+    let color = inRange ? '#3edc73' : 'white';
+    let text = inRange ? 'Hands In Range' : 'Hands Not In Range';
+    border.style.backgroundColor = color;
+    border.textContent = text;
 }
 
 function changeRotation(hand, xd, yd) {
@@ -229,6 +239,10 @@ Leap.loop({ frame: function(frame) {
         updateGestureUI(newGesture);
         if (newGesture !== gesture) continueAction = false;
     }
+
+    // update hands in range ui
+    let inRange = hands.length > 0;
+    updateHandsInRangeUI(inRange);
     
     if (!hands.length) return;
 
@@ -543,7 +557,15 @@ var processSpeech = function(transcript) {
     
         if (processed) updateGestureUI(gesture);
 
-        voiceCommand = '';
+        // handle any potential voice errors
+        voiceCommand = (transcript.length > 0) ? "UNKNOWN" : "";
+        console.log(voiceCommand + numVoiceErrors);
+        if (voiceCommand === "UNKNOWN") numVoiceErrors += 1;
+        if (numVoiceErrors > maxVoiceErrors) {
+            console.log("Sorry I didn't catch that");
+            generateSpeech("Sorry I didn't catch that");
+            numVoiceErrors = 0;
+        }
     
         return processed;
     }
