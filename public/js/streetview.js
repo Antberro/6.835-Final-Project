@@ -72,11 +72,12 @@ function updateTranscriptUI(transcript) {
 }
 
 function updateHandsInRangeUI(inRange) {
+    let display = document.getElementById('in-range-info');
     let border = document.getElementById('pano-border');
     let color = inRange ? '#3edc73' : 'white';
     let text = inRange ? 'Hands In Range' : 'Hands Not In Range';
     border.style.backgroundColor = color;
-    border.textContent = text;
+    display.textContent = text;
 }
 
 function changeRotation(hand, xd, yd) {
