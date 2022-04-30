@@ -1,5 +1,26 @@
-let panorama;
+// state variables
+var panorama;
+var voiceCommand = '';
+var gesture = '';
+var oneHandPresent = false;
+var doingInteractiveZoom = false;
+var lastAction;
+var interval;
+var continueAction = false;
+var gestureTimer = false;
+var undoPanos = [];
+var numVoiceErrors = 0;
+var maxVoiceErrors = 3;
 
+
+// constants
+var moveTimeout = 1000;
+var rotateTimeout = 50;
+var zoomTimeout = 50;
+var continueTimeout = 1000;
+
+
+// google maps streetview + geocoding functions
 function initStreetView() {
     const starting = { lat: 42.359032, lng: -71.093580 };
     const sv = new window.google.maps.StreetViewService();
@@ -38,19 +59,8 @@ function geocode(query) {
       });  
 }
 
-var gesture = '';
-var lastAction;
-var interval;
-var continueAction = false;
-var gestureTimer = false;
 
-var undoPanos = [];
-
-var moveTimeout = 1000;
-var rotateTimeout = 50;
-var zoomTimeout = 50;
-var continueTimeout = 1000;
-
+// helper functions
 function updateGestureUI(gestureType) {
     let display = document.getElementById('gesture-container');
     display.textContent = 'DETECTED COMMAND: ' + gestureType;
@@ -59,6 +69,15 @@ function updateGestureUI(gestureType) {
 function updateTranscriptUI(transcript) {
     let display = document.getElementById('transcript-container');
     display.textContent = 'TRANSCRIPT: ' + transcript;
+}
+
+function updateHandsInRangeUI(inRange) {
+    let display = document.getElementById('in-range-info');
+    let border = document.getElementById('pano-border');
+    let color = inRange ? '#3edc73' : 'white';
+    let text = inRange ? 'Hands In Range' : 'Hands Not In Range';
+    border.style.backgroundColor = color;
+    display.textContent = text;
 }
 
 function changeRotation(hand, xd, yd) {
@@ -95,34 +114,6 @@ function changeRotation(hand, xd, yd) {
     return newGesture;
 }
 
-function changeZoom(hand1, hand2, change) {
-    var zoomChange;
-    var newGesture = "";
-    if (hand1 && hand2) {
-        let rightHand = hand1.type === "right" ? hand1 : hand2;
-        if (rightHand.palmVelocity[0] > 25) {
-            newGesture = 'ZOOM IN';
-            zoomChange = 0.1;
-        }
-        else if (rightHand.palmVelocity[0] < -25) {
-            newGesture = 'ZOOM OUT';
-            zoomChange = -0.1;
-        }
-    }
-    else {
-        zoomChange = change / 100.;
-    }
-    let zoom = panorama.getZoom();
-    if ((zoomChange !== 0) && ((zoom + zoomChange) >= 0)) {
-        undoPanos.push(() => panorama.setZoom(zoom));
-        panorama.setZoom(zoom + zoomChange);
-        gestureTimer = true;
-        lastAction = () => changeZoom(hand1, hand2, change);
-        setTimeout(() => gestureTimer = false , zoomTimeout );
-    }
-    return newGesture;
-}
-
 function changePosition(hand, change) {
     var newGesture = 'MOVE';
     var currHeading = panorama.getPov().heading;
@@ -153,14 +144,107 @@ function changePosition(hand, change) {
     return newGesture;
 }
 
-function myMod(x, base) {
-    return ((x % base) + base) % base;
+function changeZoom(hand1, hand2, change) {
+    var zoomChange;
+    var newGesture = "";
+    if (hand1 && hand2) {
+        let rightHand = hand1.type === "right" ? hand1 : hand2;
+        if (rightHand.palmVelocity[0] > 25) {
+            newGesture = 'ZOOM IN';
+            zoomChange = 0.1;
+        }
+        else if (rightHand.palmVelocity[0] < -25) {
+            newGesture = 'ZOOM OUT';
+            zoomChange = -0.1;
+        }
+    }
+    else {
+        zoomChange = change / 100.;
+    }
+    let zoom = panorama.getZoom();
+    if ((zoomChange !== 0) && ((zoom + zoomChange) >= 0)) {
+        undoPanos.push(() => panorama.setZoom(zoom));
+        panorama.setZoom(zoom + zoomChange);
+        gestureTimer = true;
+        lastAction = () => changeZoom(hand1, hand2, change);
+        setTimeout(() => gestureTimer = false , zoomTimeout );
+    }
+    return newGesture;
 }
+
+function interactiveZoom(hand) {
+    newGesture = 'ZOOM';
+
+    // parse hand data to get thumb-index distance
+    var thumbPos = hand.thumb.bones.at(-1).nextJoint;
+    var indexPos = hand.indexFinger.bones.at(-1).nextJoint;
+    var dist2 = Math.pow(thumbPos[0] - indexPos[0], 2) + Math.pow(thumbPos[1] - indexPos[1], 2) + Math.pow(thumbPos[2] - indexPos[2], 2);
+    var dist = Math.round(Math.sqrt(dist2));
+
+    // normalize distance
+    var scaleMin = 50;
+    var scaleMax = 100;
+    var scaleFactor = 5.0;
+    var zoom;
+    if (dist < scaleMin) zoom = 0.0;
+    else if (dist > scaleMax) zoom = scaleFactor * 1.0;
+    else zoom = scaleFactor * (dist - scaleMin) / (scaleMax - scaleMin);
+
+    // change zoom
+    let currZoom = panorama.getZoom();
+    // let newZoom = (zoom >= currZoom) ? zoom : 
+    panorama.setZoom(zoom);
+
+    // change rotation
+    // var palmVelX = hand.palmVelocity[0];
+    // var palmVelY = hand.palmVelocity[1];
+    // var velMag = (palmVelX ** 2 + palmVelY ** 2) ** 0.5;
+    // var xDirection = Math.abs(palmVelX) > Math.abs(palmVelY);
+    // var xChange = xDirection ? 5 : 0;
+    // var yChange = xDirection ? 0 : 5;
+    // if (palmVelX > 0) xChange *= -1;
+    // if (palmVelY > 0) yChange *= -1;
+    // var pov = panorama.getPov()
+    // var newHeading = pov.heading + xChange;
+    // if (newHeading >= 360) newHeading -= 360;
+    // else if (newHeading < 0) newHeading += 360;
+    // var newPitch = pov.pitch + yChange;
+    // if (newPitch >= 90) newPitch = 90;
+    // else if (newPitch <= -90) newPitch = -90;
+    // if (velMag > 100) {
+    //     panorama.setPov({
+    //         heading: newHeading,
+    //         pitch: newPitch
+    //     });
+    // }
+
+    gestureTimer = true;
+    lastAction = () => interactiveZoom(hand);
+    setTimeout(() => gestureTimer = false , zoomTimeout );
+
+    return newGesture;
+}
+
 
 // Gesture loop
 Leap.loop({ frame: function(frame) {
+    var newGesture = gesture;
     var hands = frame.hands;
+    oneHandPresent = hands.length && hands.length === 1;
 
+    // interactive zoom gesture
+    if (oneHandPresent && voiceCommand === 'ZOOM') doingInteractiveZoom = true;
+    if (doingInteractiveZoom && !oneHandPresent) doingInteractiveZoom = false;
+    if (doingInteractiveZoom) {
+        newGesture = interactiveZoom(frame.hands[0]);
+        updateGestureUI(newGesture);
+        if (newGesture !== gesture) continueAction = false;
+    }
+
+    // update hands in range ui
+    let inRange = hands.length > 0;
+    updateHandsInRangeUI(inRange);
+    
     if (!hands.length) return;
 
     var hand = frame.hands[0];
@@ -173,6 +257,7 @@ Leap.loop({ frame: function(frame) {
     
     if (gestureTimer) return;
 
+<<<<<<< HEAD
     var newGesture = gesture;
 
     // zoom gesture
@@ -180,37 +265,35 @@ Leap.loop({ frame: function(frame) {
         newGesture = changeZoom(hand, hands[1], null);
         if (newGesture !== gesture) continueAction = false;
     }
+=======
+>>>>>>> antoniob
     // move gesture
-    else if (movePointing) {
+    if (movePointing) {
         let pointingDirection = hand.indexFinger.direction;
         if (pointingDirection[1] > 0.3) moveTimeout *= 1.1;
         else if (pointingDirection[1] < -0.3) moveTimeout /= 1.1;
         newGesture = changePosition(hand, null);
         if (newGesture !== gesture) continueAction = false;
     }
+
     // rotate gesture
     else if (hands.length == 1 && velMag > 100 && hand.grabStrength > 0.9) {
         newGesture = changeRotation(hand, null);
         if (newGesture !== gesture) continueAction = false;
     }
-    // continue gesture
-    else if (hand.pitch() < -1 && lastAction && !continueAction) {
-        lastAction();
-        interval = setInterval(lastAction, continueTimeout);
-        continueAction = true;
-    }
-    // stop gesture
-    else if (hand.pitch() > 1 && interval) {
-        newGesture = "STOP";
-        if (newGesture !== gesture) continueAction = false;
-    }
 
-    // undo gesture
-    else if (undoPointing && undoPanos.length) {
-        undoPanos.pop()();
-        continueAction = false;
-        newGesture = 'UNDO';
-    }
+    // // continue gesture
+    // else if (hand.pitch() < -1 && lastAction && !continueAction) {
+    //     lastAction();
+    //     interval = setInterval(lastAction, continueTimeout);
+    //     continueAction = true;
+    // }
+    // 
+    // // stop gesture
+    // else if (hand.pitch() > 1 && interval) {
+    //     newGesture = "STOP";
+    //     if (newGesture !== gesture) continueAction = false;
+    // }
 
     // new gesture overwrites
     if (!continueAction && interval && (newGesture !== gesture)) {
@@ -219,12 +302,13 @@ Leap.loop({ frame: function(frame) {
     }
 
     gesture = newGesture;
-    // console.log(gesture);
     updateGestureUI(gesture);
 }});
 
-// speech loop
+
+// Speech loop
 var processSpeech = function(transcript) {
+
     // Helper function to detect if any commands appear in a string
     var userSaid = function(str, commands) {
       for (var i = 0; i < commands.length; i++) {
@@ -238,8 +322,7 @@ var processSpeech = function(transcript) {
     updateTranscriptUI(transcript);
   
     var processed = false;
-
-    console.log(transcript);
+    console.log(transcript);  // for debugging
 
     // rotations
     if (userSaid(transcript, ["rotate right", "turn right", "pan right", "tilt right"])) {
@@ -420,6 +503,11 @@ var processSpeech = function(transcript) {
         gesture = 'ZOOM OUT';
         processed = true;
     }
+    else if (userSaid(transcript, ["zoom"])) {  // interactive zoom
+        voiceCommand = 'ZOOM';
+        continueAction = false;
+        processed = true;
+    }
 
     // faster/slower
     else if (userSaid(transcript, ["faster"])) {
@@ -444,7 +532,7 @@ var processSpeech = function(transcript) {
         else if (gesture === "ZOOM") zoomTimeout *= 1.5;
     }
 
-    // undo/redo
+    // undo
     else if (userSaid(transcript, ["undo"]) && undoPanos.length) {
         undoPanos.pop()();
         continueAction = false;
@@ -488,14 +576,27 @@ var processSpeech = function(transcript) {
         processed = true;
     }
 
-    if (!continueAction && interval) {
-        clearInterval(interval);
-        interval = null;
+    else {
+        if (!continueAction && interval) {
+            clearInterval(interval);
+            interval = null;
+        }
+    
+        if (processed) updateGestureUI(gesture);
+
+        // handle any potential voice errors
+        voiceCommand = (transcript.length > 0) ? "UNKNOWN" : "";
+        console.log(voiceCommand + numVoiceErrors);
+        if (voiceCommand === "UNKNOWN") numVoiceErrors += 1;
+        if (numVoiceErrors > maxVoiceErrors) {
+            console.log("Sorry I didn't catch that");
+            generateSpeech("Sorry I didn't catch that");
+            numVoiceErrors = 0;
+        }
+    
+        return processed;
     }
 
-    if (processed) updateGestureUI(gesture);
-
-    return processed;
 };
 
 window.initStreetView = initStreetView;
