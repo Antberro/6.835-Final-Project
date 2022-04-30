@@ -257,16 +257,6 @@ Leap.loop({ frame: function(frame) {
     
     if (gestureTimer) return;
 
-<<<<<<< HEAD
-    var newGesture = gesture;
-
-    // zoom gesture
-    if (hands.length > 1 && hand.grabStrength > 0.9 && hands[1].grabStrength > 0.9) {
-        newGesture = changeZoom(hand, hands[1], null);
-        if (newGesture !== gesture) continueAction = false;
-    }
-=======
->>>>>>> antoniob
     // move gesture
     if (movePointing) {
         let pointingDirection = hand.indexFinger.direction;
@@ -324,8 +314,30 @@ var processSpeech = function(transcript) {
     var processed = false;
     console.log(transcript);  // for debugging
 
+    // opening instructions tab
+    if (userSaid(transcript, ["how to", "open", "help"])) {
+        if (!document.getElementById('offcanvasRight').classList.contains("show")) {
+            $('#offcanvas-toggle').click();
+        }
+        if (userSaid(transcript, ["rotate", "tilt", "pan", "turn"])) $("#accordion-rotate-button").click(); 
+        else if (userSaid(transcript, ["move"])) $("#accordion-move-button").click(); 
+        else if (userSaid(transcript, ["zoom"])) $("#accordion-zoom-button").click(); 
+        else if (userSaid(transcript, ["continue", "keep"])) $("#accordion-continue-button").click(); 
+        else if (userSaid(transcript, ["stop"])) $("#accordion-stop-button").click(); 
+        else if (userSaid(transcript, ["change", "modify"])) $("#accordion-modify-button").click(); 
+        else if (userSaid(transcript, ["transport", "go to"])) $("#accordion-transport-button").click(); 
+        else if (userSaid(transcript, ["undo"])) $("#accordion-undo-button").click(); 
+        processed = true;
+    }
+
+    // closing instructions tab
+    else if (userSaid(transcript, ["close"])) {
+        if (document.getElementById('offcanvasRight').classList.contains("show")) $('#offcanvas-toggle').click();
+        processed = true;
+    }
+
     // rotations
-    if (userSaid(transcript, ["rotate right", "turn right", "pan right", "tilt right"])) {
+    else if (userSaid(transcript, ["rotate right", "turn right", "pan right", "tilt right"])) {
         let degree = 90;
         if (userSaid(transcript, ["°"])) {
             let splitted = transcript.split("°")[0].split(" ");
@@ -441,7 +453,6 @@ var processSpeech = function(transcript) {
         (function repeat(){
             setTimeout(function() {
                changePosition(null, 0);
-               console.log(panorama.getLinks().length);
                if (panorama.getLinks().length >= 4 || panorama.getLinks().length === 1) return;
                repeat();
            }, 200);
@@ -551,28 +562,6 @@ var processSpeech = function(transcript) {
     else if (userSaid(transcript, ["stop"]) && lastAction && continueAction) {
         continueAction = false;
         gesture = 'STOP';
-        processed = true;
-    }
-
-    // opening instructions tab
-    else if (userSaid(transcript, ["how to", "open"])) {
-        if (!document.getElementById('offcanvasRight').classList.contains("show")) {
-            $('#offcanvas-toggle').click();
-        }
-        if (userSaid(transcript, ["rotate", "tilt", "pan", "turn"])) $("#accordion-rotate-button").click(); 
-        else if (userSaid(transcript, ["move"])) $("#accordion-move-button").click(); 
-        else if (userSaid(transcript, ["zoom"])) $("#accordion-zoom-button").click(); 
-        else if (userSaid(transcript, ["continue", "keep"])) $("#accordion-continue-button").click(); 
-        else if (userSaid(transcript, ["stop"])) $("#accordion-stop-button").click(); 
-        else if (userSaid(transcript, ["change", "modify"])) $("#accordion-modify-button").click(); 
-        else if (userSaid(transcript, ["transport", "go to"])) $("#accordion-transport-button").click(); 
-        else if (userSaid(transcript, ["undo"])) $("#accordion-undo-button").click(); 
-        processed = true;
-    }
-
-    // closing instructions tab
-    else if (userSaid(transcript, ["close"])) {
-        if (document.getElementById('offcanvasRight').classList.contains("show")) $('#offcanvas-toggle').click();
         processed = true;
     }
 
