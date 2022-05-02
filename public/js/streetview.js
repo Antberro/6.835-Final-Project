@@ -192,31 +192,31 @@ function interactiveZoom(hand) {
 
     // change zoom
     let currZoom = panorama.getZoom();
-    // let newZoom = (zoom >= currZoom) ? zoom : 
     panorama.setZoom(zoom);
 
     // change rotation
-    // var palmVelX = hand.palmVelocity[0];
-    // var palmVelY = hand.palmVelocity[1];
-    // var velMag = (palmVelX ** 2 + palmVelY ** 2) ** 0.5;
-    // var xDirection = Math.abs(palmVelX) > Math.abs(palmVelY);
-    // var xChange = xDirection ? 5 : 0;
-    // var yChange = xDirection ? 0 : 5;
-    // if (palmVelX > 0) xChange *= -1;
-    // if (palmVelY > 0) yChange *= -1;
-    // var pov = panorama.getPov()
-    // var newHeading = pov.heading + xChange;
-    // if (newHeading >= 360) newHeading -= 360;
-    // else if (newHeading < 0) newHeading += 360;
-    // var newPitch = pov.pitch + yChange;
-    // if (newPitch >= 90) newPitch = 90;
-    // else if (newPitch <= -90) newPitch = -90;
-    // if (velMag > 100) {
-    //     panorama.setPov({
-    //         heading: newHeading,
-    //         pitch: newPitch
-    //     });
-    // }
+    var speedFactor = 0.8; // Tune as needed
+    var palmVelX = hand.palmVelocity[0];
+    var palmVelY = hand.palmVelocity[1];
+    var velMag = speedFactor * (palmVelX ** 2 + palmVelY ** 2) ** 0.5;
+    var xDirection = Math.abs(palmVelX) > Math.abs(palmVelY);
+    var xChange = xDirection ? 5 : 0;
+    var yChange = xDirection ? 0 : 5;
+    if (palmVelX > 0) xChange *= -1;
+    if (palmVelY > 0) yChange *= -1;
+    var pov = panorama.getPov()
+    var newHeading = pov.heading + xChange;
+    if (newHeading >= 360) newHeading -= 360;
+    else if (newHeading < 0) newHeading += 360;
+    var newPitch = pov.pitch + yChange;
+    if (newPitch >= 90) newPitch = 90;
+    else if (newPitch <= -90) newPitch = -90;
+    if (velMag > 100) {
+        panorama.setPov({
+            heading: newHeading,
+            pitch: newPitch
+        });
+    }
 
     gestureTimer = true;
     lastAction = () => interactiveZoom(hand);
@@ -240,6 +240,7 @@ Leap.loop({ frame: function(frame) {
         updateGestureUI(newGesture);
         if (newGesture !== gesture) continueAction = false;
     }
+    if (doingInteractiveZoom && voiceCommand === 'STOP_ZOOM') doingInteractiveZoom = false;
 
     // update hands in range ui
     let inRange = hands.length > 0;
@@ -516,6 +517,11 @@ var processSpeech = function(transcript) {
     }
     else if (userSaid(transcript, ["zoom"])) {  // interactive zoom
         voiceCommand = 'ZOOM';
+        continueAction = false;
+        processed = true;
+    }
+    else if (userSaid(transcript, ["stop", "done"])) {
+        voiceCommand = 'STOP_ZOOM';
         continueAction = false;
         processed = true;
     }
