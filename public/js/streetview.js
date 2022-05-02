@@ -80,6 +80,11 @@ function updateHandsInRangeUI(inRange) {
     display.textContent = text;
 }
 
+function updateNotificationUI(text) {
+    let display = document.getElementById('notification-container');
+    display.textContent = text;
+}
+
 function changeRotation(hand, xd, yd) {
     var newGesture = 'ROTATE';
     var xChange, yChange;
@@ -290,6 +295,9 @@ var processSpeech = function(transcript) {
   
     var processed = false;
     console.log(transcript);  // for debugging
+
+    // clear notification ui if user talks again
+    if (transcript) updateNotificationUI('');
 
     // opening instructions tab
     if (userSaid(transcript, ["how to", "open", "help"])) {
@@ -557,11 +565,9 @@ var processSpeech = function(transcript) {
 
         // handle any potential voice errors
         voiceCommand = (transcript.length > 0) ? "UNKNOWN" : "";
-        console.log(voiceCommand + numVoiceErrors);
         if (voiceCommand === "UNKNOWN") numVoiceErrors += 1;
         if (numVoiceErrors > maxVoiceErrors) {
-            console.log("Sorry I didn't catch that");
-            generateSpeech("Sorry I didn't catch that");
+            updateNotificationUI('Sorry I didn\'t catch that. Can you say that again?');
             numVoiceErrors = 0;
         }
     

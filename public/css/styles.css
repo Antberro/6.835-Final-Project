@@ -58,3 +58,10 @@ nav {
     display: flex;
     align-items: center;
 }
+
+#notification-container {
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
