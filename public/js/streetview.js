@@ -511,7 +511,7 @@ var processSpeech = function(transcript) {
     }
 
     // faster/slower
-    else if (userSaid(transcript, ["faster"])) {
+    else if (userSaid(transcript, ["fast"])) {
         if (continueAction) {
             clearInterval(interval);
             continueTimeout /= 1.5;
@@ -522,7 +522,7 @@ var processSpeech = function(transcript) {
         else if (gesture === "ZOOM") zoomTimeout /= 1.5;
 
     }
-    else if (userSaid(transcript, ["slower"])) {
+    else if (userSaid(transcript, ["slow"])) {
         if (continueAction) {
             clearInterval(interval);
             continueTimeout *= 1.5;
