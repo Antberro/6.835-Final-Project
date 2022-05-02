@@ -63,7 +63,7 @@ function geocode(query) {
 // helper functions
 function updateGestureUI(gestureType) {
     let display = document.getElementById('gesture-container');
-    display.textContent = 'DETECTED COMMAND: ' + gestureType;
+    display.textContent = 'COMMAND: ' + gestureType;
 }
 
 function updateTranscriptUI(transcript) {
