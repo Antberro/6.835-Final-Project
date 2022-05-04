@@ -13,9 +13,7 @@ nav {
 }
 
 #in-range-info {
-    display: flex;
-    height: 100%;
-    margin-right: 10%; /* need to find a better solution */
+    text-align: center;
 }
 
 #pano-border {
@@ -67,6 +65,7 @@ nav {
 
 #notification-container {
     display: flex;
+    text-align: center;
     align-items: center;
     justify-content: center;
     padding: 1%;
