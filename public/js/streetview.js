@@ -53,8 +53,6 @@ function geocode(query) {
             let currPano = panorama.getPano();
             undoPanos.push(() => panorama.setPano(currPano));
             panorama.setPosition(new google.maps.LatLng(results[0].geometry.location));
-            if (panorama.getLinks().length <= 1) updateNotificationUI("You hit a dead end!");
-            else updateNotificationUI("");
         } else {
           console.log('Geocode was not successful for the following reason: ' + status);
         }
@@ -86,6 +84,8 @@ function updateNotificationUI(text) {
     let display = document.getElementById('notification-container');
     display.textContent = text;
 }
+
+setInterval(() => panorama.getLinks().length <= 1 ? updateNotificationUI("You hit a dead end!") : updateNotificationUI(""), 10);
 
 function changeRotation(hand, xd, yd) {
     var newGesture = 'ROTATE';
@@ -144,9 +144,6 @@ function changePosition(hand, change) {
     let id = panorama.getPano();
     undoPanos.push(() => panorama.setPano(id));
     panorama.setPano(newPano);
-
-    if (panorama.getLinks().length <= 1) updateNotificationUI("You hit a dead end!");
-    else updateNotificationUI("");
 
     gestureTimer = true;
     lastAction = () => changePosition(hand, change);
