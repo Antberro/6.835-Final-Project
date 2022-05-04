@@ -294,13 +294,13 @@ var processSpeech = function(transcript) {
     updateTranscriptUI(transcript);
   
     var processed = false;
-    console.log(transcript);  // for debugging
+    // console.log(transcript);  // for debugging
 
     // clear notification ui if user talks again
     if (transcript) updateNotificationUI('');
 
     // opening instructions tab
-    if (userSaid(transcript, ["how to", "open", "help"])) {
+    if (userSaid(transcript, ["how", "open", "help"])) {
         if (!document.getElementById('offcanvasRight').classList.contains("show")) {
             $('#offcanvas-toggle').click();
         }
