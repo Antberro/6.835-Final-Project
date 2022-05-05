@@ -61,6 +61,24 @@ function geocode(query) {
       });  
 }
 
+// cookie things
+function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "{}";
+}
+
+let savedLocations = JSON.parse(getCookie("locations"));
 
 // helper functions
 function updateGestureUI(gestureType) {
@@ -293,6 +311,7 @@ var processSpeech = function(transcript) {
 
     // clear notification ui if user talks again
     if (transcript && notifications.includes('Sorry I didn\'t catch that. Can you say that again?')) notifications.splice(notifications.indexOf('Sorry I didn\'t catch that. Can you say that again?'), 1); 
+    if (transcript && notifications.includes('The saved location you tried to delete does not exist!')) notifications.splice(notifications.indexOf('The saved location you tried to delete does not exist!'), 1); 
     updateNotificationUI();
 
     // opening instructions tab
@@ -383,7 +402,8 @@ var processSpeech = function(transcript) {
     else if (userSaid(transcript, ["go to", "move to", "transport to"])) {
         let splitted = transcript.split("to");
         let query = splitted[splitted.length - 1];
-        geocode(query);
+        if (savedLocations.hasOwnProperty(query)) panorama.setPano(savedLocations[query]);
+        else geocode(query);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
@@ -549,6 +569,23 @@ var processSpeech = function(transcript) {
         continueAction = false;
         gesture = 'STOP';
         processed = true;
+    }
+
+    // save location
+    else if (userSaid(transcript, ["save as"])) {
+        let splitted = transcript.split("save as ");
+        let query = splitted[splitted.length - 1];
+        savedLocations[query] = panorama.getPano();
+        document.cookie = "locations=" + JSON.stringify(savedLocations);
+    }
+
+    // remove location
+    else if (userSaid(transcript, ["remove"])) {
+        let splitted = transcript.split("remove");
+        let query = splitted[splitted.length - 1];
+        if (savedLocations.hasOwnProperty(query)) delete savedLocations[query];
+        else notifications.push('The saved location you tried to delete does not exist!');
+        document.cookie = "locations=" + JSON.stringify(savedLocations);
     }
 
     else {
