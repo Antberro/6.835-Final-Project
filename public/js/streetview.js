@@ -322,11 +322,12 @@ var processSpeech = function(transcript) {
         if (userSaid(transcript, ["rotate", "tilt", "pan", "turn"])) $("#accordion-rotate-button").click(); 
         else if (userSaid(transcript, ["move"])) $("#accordion-move-button").click(); 
         else if (userSaid(transcript, ["zoom"])) $("#accordion-zoom-button").click(); 
-        else if (userSaid(transcript, ["continue", "keep"])) $("#accordion-continue-button").click(); 
-        else if (userSaid(transcript, ["stop"])) $("#accordion-stop-button").click(); 
+        else if (userSaid(transcript, ["continue", "keep", "stop"])) $("#accordion-continue-button").click(); 
         else if (userSaid(transcript, ["change", "modify"])) $("#accordion-modify-button").click(); 
         else if (userSaid(transcript, ["transport", "go to"])) $("#accordion-transport-button").click(); 
         else if (userSaid(transcript, ["undo"])) $("#accordion-undo-button").click(); 
+        else if (userSaid(transcript, ["save", "bookmark"])) $("#accordion-save-button").click(); 
+        else if (userSaid(transcript, ["remove", "delete"])) $("#accordion-remove-button").click(); 
         processed = true;
     }
 
@@ -400,9 +401,9 @@ var processSpeech = function(transcript) {
 
     // transport
     else if (userSaid(transcript, ["go to", "move to", "transport to"])) {
-        let splitted = transcript.split("to");
+        let splitted = transcript.split("to ");
         let query = splitted[splitted.length - 1];
-        if (savedLocations.hasOwnProperty(query)) panorama.setPano(savedLocations[query]);
+        if (savedLocations[query]) panorama.setPano(savedLocations[query]);
         else geocode(query);
         continueAction = false;
         gesture = "MOVE";
@@ -572,11 +573,12 @@ var processSpeech = function(transcript) {
     }
 
     // save location
-    else if (userSaid(transcript, ["save as"])) {
-        let splitted = transcript.split("save as ");
+    else if (userSaid(transcript, ["save as", "bookmark as"])) {
+        let splitted = transcript.split("as ");
         let query = splitted[splitted.length - 1];
         savedLocations[query] = panorama.getPano();
         document.cookie = "locations=" + JSON.stringify(savedLocations);
+        processed = true;
     }
 
     // remove location
@@ -586,6 +588,7 @@ var processSpeech = function(transcript) {
         if (savedLocations.hasOwnProperty(query)) delete savedLocations[query];
         else notifications.push('The saved location you tried to delete does not exist!');
         document.cookie = "locations=" + JSON.stringify(savedLocations);
+        processed = true;
     }
 
     else {
