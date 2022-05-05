@@ -49,6 +49,7 @@ function processSVData({ data }) {
 function geocode(query) {
     let geocoder = new window.google.maps.Geocoder();
     geocoder.geocode( { 'address': query}, function(results, status) {
+        console.log(results);
         if (status == 'OK') {
             // console.log(results[0].geometry.location);
             let currPano = panorama.getPano();
@@ -88,8 +89,8 @@ function updateNotificationUI() {
 
 setInterval(() => {
     if (panorama.getLinks().length <= 1 && !notifications.includes("You hit a dead end!")) notifications.push("You hit a dead end!");
-    else if (panorama.getLinks().length > 1 && notifications.includes("You hit a dead end!")) notifications.splice(notifications.findIndex("You hit a dead end!"), 1);
-    updateNotificationUI()
+    else if (panorama.getLinks().length > 1 && notifications.includes("You hit a dead end!")) notifications.splice(notifications.indexOf("You hit a dead end!"), 1);
+    updateNotificationUI();
 }, 100);
 
 function changeRotation(hand, xd, yd) {
@@ -261,19 +262,6 @@ Leap.loop({ frame: function(frame) {
         if (newGesture !== gesture) continueAction = false;
     }
 
-    // // continue gesture
-    // else if (hand.pitch() < -1 && lastAction && !continueAction) {
-    //     lastAction();
-    //     interval = setInterval(lastAction, continueTimeout);
-    //     continueAction = true;
-    // }
-    // 
-    // // stop gesture
-    // else if (hand.pitch() > 1 && interval) {
-    //     newGesture = "STOP";
-    //     if (newGesture !== gesture) continueAction = false;
-    // }
-
     // new gesture overwrites
     if (!continueAction && interval && (newGesture !== gesture)) {
         clearInterval(interval);
@@ -304,7 +292,7 @@ var processSpeech = function(transcript) {
     // console.log(transcript);  // for debugging
 
     // clear notification ui if user talks again
-    if (transcript && notifications.includes('Sorry I didn\'t catch that. Can you say that again?')) notifications.splice(notifications.findIndex('Sorry I didn\'t catch that. Can you say that again?'), 1); 
+    if (transcript && notifications.includes('Sorry I didn\'t catch that. Can you say that again?')) notifications.splice(notifications.indexOf('Sorry I didn\'t catch that. Can you say that again?'), 1); 
     updateNotificationUI();
 
     // opening instructions tab
