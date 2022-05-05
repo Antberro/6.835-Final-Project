@@ -11,6 +11,7 @@ var gestureTimer = false;
 var undoPanos = [];
 var numVoiceErrors = 0;
 var maxVoiceErrors = 3;
+var notifications = [];
 
 
 // constants
@@ -80,12 +81,16 @@ function updateHandsInRangeUI(inRange) {
     display.textContent = text;
 }
 
-function updateNotificationUI(text) {
+function updateNotificationUI() {
     let display = document.getElementById('notification-container');
-    display.textContent = text;
+    display.innerHTML = notifications.toString().replace(",", "<br>");
 }
 
-setInterval(() => panorama.getLinks().length <= 1 ? updateNotificationUI("You hit a dead end!") : updateNotificationUI(""), 10);
+setInterval(() => {
+    if (panorama.getLinks().length <= 1 && !notifications.includes("You hit a dead end!")) notifications.push("You hit a dead end!");
+    else if (panorama.getLinks().length > 1 && notifications.includes("You hit a dead end!")) notifications.splice(notifications.findIndex("You hit a dead end!"), 1);
+    updateNotificationUI()
+}, 100);
 
 function changeRotation(hand, xd, yd) {
     var newGesture = 'ROTATE';
@@ -299,7 +304,8 @@ var processSpeech = function(transcript) {
     // console.log(transcript);  // for debugging
 
     // clear notification ui if user talks again
-    if (transcript) updateNotificationUI('');
+    if (transcript && notifications.includes('Sorry I didn\'t catch that. Can you say that again?')) notifications.splice(notifications.findIndex('Sorry I didn\'t catch that. Can you say that again?'), 1); 
+    updateNotificationUI();
 
     // opening instructions tab
     if (userSaid(transcript, ["how", "open", "help"])) {
@@ -569,7 +575,8 @@ var processSpeech = function(transcript) {
         voiceCommand = (transcript.length > 0) ? "UNKNOWN" : "";
         if (voiceCommand === "UNKNOWN") numVoiceErrors += 1;
         if (numVoiceErrors > maxVoiceErrors) {
-            updateNotificationUI('Sorry I didn\'t catch that. Can you say that again?');
+            if (!notifications.includes('Sorry I didn\'t catch that. Can you say that again?')) notifications.push('Sorry I didn\'t catch that. Can you say that again?');
+            updateNotificationUI();
             numVoiceErrors = 0;
         }
     
