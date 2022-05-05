@@ -583,7 +583,7 @@ var processSpeech = function(transcript) {
 
     // remove location
     else if (userSaid(transcript, ["remove"])) {
-        let splitted = transcript.split("remove");
+        let splitted = transcript.split("remove ");
         let query = splitted[splitted.length - 1];
         if (savedLocations.hasOwnProperty(query)) delete savedLocations[query];
         else notifications.push('The saved location you tried to delete does not exist!');
