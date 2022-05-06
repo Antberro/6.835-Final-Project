@@ -568,6 +568,19 @@ var processSpeech = function(transcript) {
         processed = true;
     }
 
+    // transport if user omits "to"
+    else if (userSaid(transcript, ["go", "move", "transport"])) {
+        transcript = transcript.replaceAll("move", "go");
+        transcript = transcript.replaceAll("transport", "go");
+        let splitted = transcript.split("go ");
+        let query = splitted[splitted.length - 1];
+        if (savedLocations[query]) panorama.setPosition(savedLocations[query]);
+        else geocode(query);
+        continueAction = false;
+        gesture = "MOVE";
+        processed = true;
+    }
+
     // move to next intersection
     else if (userSaid(transcript, ["next block", "next street", "next intersection"])) {
         gesture = "MOVE";
