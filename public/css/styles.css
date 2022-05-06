@@ -33,6 +33,56 @@ nav {
     height: 100%;
 }
 
+#tiny-map-border {
+    visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    bottom: 3%;
+    left: 1.5%;
+    z-index: 10;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+}
+
+#tiny-map {
+    visibility: hidden;
+    display: flex;
+    z-index: 11;
+    width: 245px;
+    height: 245px;
+    border-radius: 50%;
+}
+
+.animation-open {
+    animation: expand_center 0.5s;
+    animation-fill-mode: forwards;
+}
+@keyframes expand_center {
+    from {
+        transform: scale(0);
+      }
+      to {
+        transform: scale(1);
+      }   
+}
+
+.animation-close {
+    animation: collapse_center 0.5s;
+    animation-fill-mode: forwards;
+}
+@keyframes collapse_center {
+    from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(0);
+      }   
+}
+
 #info-bar {
     display: flex;
     flex-direction: row;

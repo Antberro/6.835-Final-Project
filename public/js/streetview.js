@@ -1,5 +1,11 @@
+// const google = require("google");
+
 // state variables
 var panorama;
+var map;
+var currPosMarker;
+var ds;
+var dsDisplay;
 var voiceCommand = '';
 var gesture = '';
 var oneHandPresent = false;
@@ -12,6 +18,8 @@ var undoPanos = [];
 var numVoiceErrors = 0;
 var maxVoiceErrors = 3;
 var notifications = [];
+var doingDirections = false;
+var currDestination;
 
 
 // constants
@@ -19,20 +27,48 @@ var moveTimeout = 1000;
 var rotateTimeout = 50;
 var zoomTimeout = 50;
 var continueTimeout = 1000;
-
+var minDistToDest = 25; // meters
 
 // google maps streetview + geocoding functions
 function initStreetView() {
     const starting = { lat: 42.359032, lng: -71.093580 };
     const sv = new window.google.maps.StreetViewService();
+    ds = new window.google.maps.DirectionsService();
+    dsDisplay = new window.google.maps.DirectionsRenderer();
 
     // set up panorama viewer
     panorama = new window.google.maps.StreetViewPanorama(
         document.getElementById('pano')
     );
 
+    // set up map
+    map = new window.google.maps.Map(
+        document.getElementById('tiny-map'), {
+            center: starting,
+            zoom: 17,
+            disableDefaultUI: true,
+        }
+    );
+
+    // create marker for current location and add to map
+    currPosMarker = createMarker(starting);
+    currPosMarker.setMap(map);
+
     // set initial sv camera
     sv.getPanorama({ location: starting, radius: 50 }).then(processSVData);
+
+    // add event listeners
+    panorama.addListener('position_changed', () => {
+        let newPosition = {
+            lat: panorama.getPosition().lat(),
+            lng: panorama.getPosition().lng(),
+        }
+        currPosMarker.setMap(null);
+        currPosMarker = createMarker(newPosition);
+        currPosMarker.setMap(map);
+        map.setCenter(newPosition);
+        map.setZoom(17);
+    });
 }
 
 function processSVData({ data }) {
@@ -59,6 +95,53 @@ function geocode(query) {
           console.log('Geocode was not successful for the following reason: ' + status);
         }
       });  
+}
+
+function geocodeUserSpeech(speech) {
+    let geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode( { 'address': speech}, function(results, status) {
+        console.log(results);
+        if (status == 'OK') {
+            console.log(results[0].geometry.location);
+            console.log(new google.maps.LatLng(results[0].geometry.location));
+        } else {
+          console.log('Geocode was not successful for the following reason: ' + status);
+        }
+      });  
+}
+
+function createMarker(location) {
+    marker = new google.maps.Marker({
+        position: location,
+        map: map,
+        icon: '../img/avatar.png',
+    });
+    return marker;
+}
+
+function displayRouteDirections(directionsService, directionsDisplay, destination) {
+    dsDisplay.setMap(map);
+    directionsService.route({
+        origin: currPosMarker.getPosition(),
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING
+    }, function (response, status) {
+        if (status === google.maps.DirectionsStatus.OK) {
+            currDestination = {
+                lat: response.routes[0].legs[0].end_location.lat(),
+                lng: response.routes[0].legs[0].end_location.lng()
+            };
+            directionsDisplay.setDirections(response);
+        } else {
+            // window.alert('Directions request failed due to ' + status);
+            currDestination = null;
+        }
+    });
+}
+
+function closeRouteDirections(directionsDisplay) {
+    dsDisplay.setMap(null);
+    currDestination = null;
 }
 
 // cookie things
@@ -103,6 +186,27 @@ function updateHandsInRangeUI(inRange) {
 function updateNotificationUI() {
     let display = document.getElementById('notification-container');
     display.innerHTML = notifications.toString().replace(",", "<br>");
+}
+
+function updateMapUI(show) {
+    let border = document.getElementById('tiny-map-border');
+    let tinyMap = document.getElementById('tiny-map');
+
+    if (show) {
+        border.style.visibility = 'visible';
+        tinyMap.style.visibility = 'visible';
+        border.classList.remove('animation-close');
+        tinyMap.classList.remove('animation-close');
+        border.classList.add('animation-open');
+        tinyMap.classList.add('animation-open');
+    }
+
+    else {
+        border.classList.remove('animation-open');
+        tinyMap.classList.remove('animation-open');
+        border.classList.add('animation-close');
+        tinyMap.classList.add('animation-close');
+    }
 }
 
 setInterval(() => {
@@ -168,6 +272,17 @@ function changePosition(hand, change) {
     let id = panorama.getPano();
     undoPanos.push(() => panorama.setPano(id));
     panorama.setPano(newPano);
+
+    // check if reached destination
+    if (doingDirections) {
+        // get dist in meters
+        let dist = google.maps.geometry.spherical.computeDistanceBetween(currPosMarker.getPosition(), currDestination);
+        if (dist < minDistToDest) {
+            generateSpeech('You have arrived at your destination');
+            updateMapUI(false);
+            closeRouteDirections(dsDisplay);
+        }
+    }
 
     gestureTimer = true;
     lastAction = () => changePosition(hand, change);
@@ -588,6 +703,27 @@ var processSpeech = function(transcript) {
         if (savedLocations.hasOwnProperty(query)) delete savedLocations[query];
         else notifications.push('The saved location you tried to delete does not exist!');
         document.cookie = "locations=" + JSON.stringify(savedLocations);
+        processed = true;
+    }
+
+    // stop directions
+    else if (userSaid(transcript, ["quit"]) && userSaid(transcript, ["directions"]) && doingDirections) {
+        doingDirections = false;
+        closeRouteDirections(dsDisplay);
+        map.setZoom(17);
+        map.setCenter(currPosMarker.getPosition());
+        updateMapUI(false);
+        continueAction = false;
+        processed = true;
+    }
+
+    // start directions
+    else if (userSaid(transcript, ["directions"])) {
+        doingDirections = true;
+        let destination = transcript.split('directions to ').at(1);
+        displayRouteDirections(ds, dsDisplay, destination);
+        updateMapUI(true);
+        continueAction = false;
         processed = true;
     }
 
