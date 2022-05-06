@@ -139,7 +139,15 @@ function displayRouteDirections(directionsService, directionsDisplay, destinatio
     });
 }
 
-function closeRouteDirections(directionsDisplay) {
+function stopDirections() {
+    doingDirections = false;
+    closeRouteDirections(dsDisplay);
+    map.setZoom(17);
+    map.setCenter(currPosMarker.getPosition());
+    updateMapUI(false);
+}
+
+function closeRouteDirections() {
     dsDisplay.setMap(null);
     currDestination = null;
 }
@@ -372,7 +380,6 @@ Leap.loop({ frame: function(frame) {
 
     var hand = frame.hands[0];
     var movePointing = hand.indexFinger.extended && !(hand.thumb.extended) && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
-    var undoPointing = !(hand.indexFinger.extended) && hand.thumb.extended && !(hand.pinky.extended) && !(hand.middleFinger.extended) && !(hand.ringFinger.extended);
     var palmVel = hand.palmVelocity;
     var palmVelX = palmVel[0];
     var palmVelY = palmVel[1];
@@ -708,11 +715,7 @@ var processSpeech = function(transcript) {
 
     // stop directions
     else if (userSaid(transcript, ["quit"]) && userSaid(transcript, ["directions"]) && doingDirections) {
-        doingDirections = false;
-        closeRouteDirections(dsDisplay);
-        map.setZoom(17);
-        map.setCenter(currPosMarker.getPosition());
-        updateMapUI(false);
+        stopDirections();
         continueAction = false;
         processed = true;
     }
@@ -723,6 +726,7 @@ var processSpeech = function(transcript) {
         let destination = transcript.split('directions to ').at(1);
         displayRouteDirections(ds, dsDisplay, destination);
         updateMapUI(true);
+        undoPanos.push(() => stopDirections());
         continueAction = false;
         processed = true;
     }
