@@ -82,32 +82,30 @@ function processSVData({ data }) {
     panorama.setVisible(true);
 }
 
-function geocode(query) {
+function geocodeTransport(query) {
     let geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode( { 'address': query}, function(results, status) {
-        console.log(results);
+    geocoder.geocode({ 'address': query}, function(results, status) {
         if (status == 'OK') {
-            // console.log(results[0].geometry.location);
             let currPano = panorama.getPano();
             undoPanos.push(() => panorama.setPano(currPano));
             panorama.setPosition(new google.maps.LatLng(results[0].geometry.location));
         } else {
           console.log('Geocode was not successful for the following reason: ' + status);
         }
-      });  
+    });  
 }
 
-function geocodeUserSpeech(speech) {
+function geocodeSave(query, name) {
     let geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode( { 'address': speech}, function(results, status) {
-        console.log(results);
+    geocoder.geocode({ 'address': query }, function(results, status) {
         if (status == 'OK') {
-            console.log(results[0].geometry.location);
-            console.log(new google.maps.LatLng(results[0].geometry.location));
+            savedLocations[name] = results[0].geometry.location;
+            undoPanos.push(() => {delete savedLocations[name]; document.cookie = "locations=" + JSON.stringify(savedLocations);});
+            document.cookie = "locations=" + JSON.stringify(savedLocations);
         } else {
           console.log('Geocode was not successful for the following reason: ' + status);
         }
-      });  
+    });  
 }
 
 function createMarker(location) {
@@ -695,19 +693,34 @@ var processSpeech = function(transcript) {
     }
 
     // save location
-    else if (userSaid(transcript, ["save as", "bookmark as"])) {
+    else if (userSaid(transcript, ["save", "bookmark"]) && userSaid(transcript, ["as"])) {
+        transcript = transcript.replaceAll("bookmark", "save");
         let splitted = transcript.split("as ");
-        let query = splitted[splitted.length - 1];
-        savedLocations[query] = panorama.getPosition();
-        document.cookie = "locations=" + JSON.stringify(savedLocations);
+        let splitted2 = splitted[splitted.length - 2].split("save ");
+        let address = splitted2[splitted2.length - 1];
+        let name = splitted[splitted.length - 1];
+        console.log(address);
+        if (address && (address !== 'here') && (address !== 'this')) {
+            geocodeSave(address, name);
+        }
+        else {
+            savedLocations[name] = panorama.getPosition();
+            document.cookie = "locations=" + JSON.stringify(savedLocations);
+            undoPanos.push(() => {delete savedLocations[name]; document.cookie = "locations=" + JSON.stringify(savedLocations);});
+        }
         processed = true;
     }
 
     // remove location
-    else if (userSaid(transcript, ["remove"])) {
+    else if (userSaid(transcript, ["remove", "delete"])) {
+        transcript = transcript.replaceAll("delete", "remove");
         let splitted = transcript.split("remove ");
-        let query = splitted[splitted.length - 1];
-        if (savedLocations.hasOwnProperty(query)) delete savedLocations[query];
+        let name = splitted[splitted.length - 1];
+        if (savedLocations.hasOwnProperty(name)) {
+            let position = savedLocations[name];
+            undoPanos.push(() => {savedLocations[name] = position; document.cookie = "locations=" + JSON.stringify(savedLocations);})
+            delete savedLocations[name];
+        }
         else notifications.push('The saved location you tried to delete does not exist!');
         document.cookie = "locations=" + JSON.stringify(savedLocations);
         processed = true;
