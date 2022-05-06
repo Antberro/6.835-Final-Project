@@ -525,7 +525,7 @@ var processSpeech = function(transcript) {
     else if (userSaid(transcript, ["go to", "move to", "transport to"])) {
         let splitted = transcript.split("to ");
         let query = splitted[splitted.length - 1];
-        if (savedLocations[query]) panorama.setPano(savedLocations[query]);
+        if (savedLocations[query]) panorama.setPosition(savedLocations[query]);
         else geocode(query);
         continueAction = false;
         gesture = "MOVE";
@@ -698,7 +698,7 @@ var processSpeech = function(transcript) {
     else if (userSaid(transcript, ["save as", "bookmark as"])) {
         let splitted = transcript.split("as ");
         let query = splitted[splitted.length - 1];
-        savedLocations[query] = panorama.getPano();
+        savedLocations[query] = panorama.getPosition();
         document.cookie = "locations=" + JSON.stringify(savedLocations);
         processed = true;
     }
