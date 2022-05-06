@@ -524,7 +524,7 @@ var processSpeech = function(transcript) {
         let splitted = transcript.split("to ");
         let query = splitted[splitted.length - 1];
         if (savedLocations[query]) panorama.setPosition(savedLocations[query]);
-        else geocode(query);
+        else geocodeTransport(query);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
@@ -575,7 +575,7 @@ var processSpeech = function(transcript) {
         let splitted = transcript.split("go ");
         let query = splitted[splitted.length - 1];
         if (savedLocations[query]) panorama.setPosition(savedLocations[query]);
-        else geocode(query);
+        else geocodeTransport(query);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
