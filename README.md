@@ -4,6 +4,7 @@ A multimodal user interface that uses gestures and speech to create a more natur
 
 #  Requirements
 ### Software
+* [Leap Hand Tracking Software](https://developer.leapmotion.com/tracking-software-download)
 * [Leap Motion API](https://developer-archive.leapmotion.com/documentation/javascript/api/Leap_Classes.html)
 * [Google Maps Javascript API](https://developers.google.com/maps/documentation/javascript/overview)
 * [Google Maps Geocoding API](https://developers.google.com/maps/documentation/geocoding/overview)
