@@ -8,16 +8,22 @@ A multimodal user interface that uses gestures and speech to create a more natur
 * [Google Maps Javascript API](https://developers.google.com/maps/documentation/javascript/overview)
 * [Google Maps Geocoding API](https://developers.google.com/maps/documentation/geocoding/overview)
 * [Google Maps Directions API](https://developers.google.com/maps/documentation/directions/overview)
+* [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
 * [Node.js](https://nodejs.org/en/)
+* [Bootstrap](https://getbootstrap.com/)
 
 ### Hardware
 * Leap Motion
+* Laptop 
+  * Microphone
+  * Speaker
+  * Desktop
 
 # Installation
-TODO
+To install all libraries needed, run `npm i` in the project directory.
 
 # Usage
-Make sure Leap Motion is connected to computer. Naviagate to the project directory and run:
+Make sure Leap Motion is connected to computer. Navigate to the project directory and run:
 ```bash
 node server.js
 ```
