@@ -53,6 +53,6 @@ This will start the backend server on your machine. In Chrome go to http://local
 
 **public/css/styles.css:** defines styling of webpage.
 
-**public/js/streetview.js:** main script containing ui logic.
+**public/js/streetview.js:** main script containing ui logic. This includes both voice and gesture code.
 
-**public/lib:** folder containing additional libraries (from miniproject 3).
+**public/lib:** folder containing additional libraries (some of which from miniproject 3).
