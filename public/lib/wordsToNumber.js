@@ -1,3 +1,5 @@
+// code sourced from https://stackoverflow.com/questions/11980087/javascript-words-to-numbers
+
 var Small = {
     'zero': 0,
     'one': 1,
