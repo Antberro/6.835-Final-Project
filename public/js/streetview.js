@@ -119,6 +119,7 @@ function createMarker(location) {
 
 function displayRouteDirections(directionsService, directionsDisplay, startingPoint, destination) {
     dsDisplay.setMap(map);
+    if (savedLocations.hasOwnProperty(destination)) destination = savedLocations[destination]; 
     directionsService.route({
         origin: (startingPoint !== null) ? startingPoint : currPosMarker.getPosition(),
         destination: destination,
@@ -753,9 +754,13 @@ var processSpeech = function(transcript) {
         // check if user specified starting point
         let startingPoint = null;
         if (userSaid(transcript, ["from"])) {
-            startingPoint = transcript.split('directions from').at(1).split('to').at(0);
-            destination = transcript.split('to').at(1);
-            geocodeTransport(startingPoint);
+            startingPoint = transcript.split('directions from ').at(1).split(' to ').at(0);
+            destination = transcript.split(' to ').at(1);
+            if (savedLocations.hasOwnProperty(startingPoint)) {
+                panorama.setPosition(savedLocations[startingPoint]);
+                startingPoint = savedLocations[startingPoint];
+            } 
+            else geocodeTransport(startingPoint);
             console.log(startingPoint);
             console.log(destination);
         }
