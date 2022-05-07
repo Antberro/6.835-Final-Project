@@ -117,10 +117,10 @@ function createMarker(location) {
     return marker;
 }
 
-function displayRouteDirections(directionsService, directionsDisplay, destination) {
+function displayRouteDirections(directionsService, directionsDisplay, startingPoint, destination) {
     dsDisplay.setMap(map);
     directionsService.route({
-        origin: currPosMarker.getPosition(),
+        origin: (startingPoint !== null) ? startingPoint : currPosMarker.getPosition(),
         destination: destination,
         travelMode: google.maps.TravelMode.DRIVING
     }, function (response, status) {
@@ -447,7 +447,8 @@ var processSpeech = function(transcript) {
         else if (userSaid(transcript, ["transport", "go to"])) $("#accordion-transport-button").click(); 
         else if (userSaid(transcript, ["undo"])) $("#accordion-undo-button").click(); 
         else if (userSaid(transcript, ["save", "bookmark"])) $("#accordion-save-button").click(); 
-        else if (userSaid(transcript, ["remove", "delete"])) $("#accordion-remove-button").click(); 
+        else if (userSaid(transcript, ["remove", "delete"])) $("#accordion-remove-button").click();
+        else if (userSaid(transcript, ["directions"])) $("#accordion-directions-button").click(); 
         processed = true;
     }
 
@@ -748,9 +749,22 @@ var processSpeech = function(transcript) {
 
     // start directions
     else if (userSaid(transcript, ["directions"])) {
+
+        // check if user specified starting point
+        let startingPoint = null;
+        if (userSaid(transcript, ["from"])) {
+            startingPoint = transcript.split('directions from').at(1).split('to').at(0);
+            destination = transcript.split('to').at(1);
+            geocodeTransport(startingPoint);
+            console.log(startingPoint);
+            console.log(destination);
+        }
+        else {
+            destination = transcript.split('directions to ').at(1);
+        }
+
         doingDirections = true;
-        let destination = transcript.split('directions to ').at(1);
-        displayRouteDirections(ds, dsDisplay, destination);
+        displayRouteDirections(ds, dsDisplay, startingPoint, destination);
         updateMapUI(true);
         undoPanos.push(() => stopDirections());
         continueAction = false;
