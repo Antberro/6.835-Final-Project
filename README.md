@@ -12,6 +12,7 @@ A multimodal user interface that uses gestures and speech to create a more natur
 * [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
 * [Node.js](https://nodejs.org/en/)
 * [Bootstrap](https://getbootstrap.com/)
+* [Google Chrome](https://www.google.com/chrome/index.html)
 
 ### Hardware
 * Leap Motion
@@ -29,6 +30,8 @@ Make sure Leap Motion is connected to computer. Navigate to the project director
 node server.js
 ```
 This will start the backend server on your machine. In Chrome go to http://localhost:8000. Give the browser permission to access the microphone and enjoy!
+
+Note that the system is not currently tested on other browsers (e.g., Firefox, Safari) and thus may not work on them.
 
 # File Breakdown
 * server.js
