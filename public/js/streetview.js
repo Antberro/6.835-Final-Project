@@ -522,7 +522,7 @@ var processSpeech = function(transcript) {
     }
 
     // transport
-    else if (userSaid(transcript, ["go to", "move to", "transport to"])) {
+    else if (userSaid(transcript, ["go to", "move to", "transport to", "move me to", "transport me to"])) {
         let splitted = transcript.split("to ");
         let query = splitted[splitted.length - 1];
         if (savedLocations[query]) panorama.setPosition(savedLocations[query]);
@@ -533,37 +533,37 @@ var processSpeech = function(transcript) {
     }
 
     // do the move move
-    else if (userSaid(transcript, ["move forward", "moves forward", "go forward", "move straight", "moves straight", "go straight"])) {
+    else if (userSaid(transcript, ["move forward", "moves forward", "go forward", "move straight", "moves straight", "go straight", "transport forward", "transport straight"])) {
         changePosition(null, 0);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
     }
-    else if (userSaid(transcript, ["move backward", "moves backward", "go backward", "go back", "move back"])) {
+    else if (userSaid(transcript, ["move backward", "moves backward", "go backward", "go back", "move back", "transport backward", "transport back"])) {
         changePosition(null, 180);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
     }
-    else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "go slight right", "go slightly right", "go right slightly", "moves slight right", "moves slightly right", "moves right slightly"])) {
+    else if (userSaid(transcript, ["move slight right", "move slightly right", "move right slightly", "go slight right", "go slightly right", "go right slightly", "moves slight right", "moves slightly right", "moves right slightly", "transport slight right", "transport slightly right", "transport right slightly"])) {
         changePosition(null, 45);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
     }
-    else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "go slight left", "go slightly left", "go left slightly", "moves slight left", "moves slightly left", "moves left slightly"])) {
+    else if (userSaid(transcript, ["move slight left", "move slightly left", "move left slightly", "go slight left", "go slightly left", "go left slightly", "moves slight left", "moves slightly left", "moves left slightly", "transport slight left", "transport slightly left", "transport left slightly"])) {
         changePosition(null, -45);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
     }
-    else if (userSaid(transcript, ["move right", "moves right", "go right",])) {
+    else if (userSaid(transcript, ["move right", "moves right", "go right", "transport right"])) {
         changePosition(null, 90);
         continueAction = false;
         gesture = "MOVE";
         processed = true;
     }
-    else if (userSaid(transcript, ["move left", "moves left", "go left"])) {
+    else if (userSaid(transcript, ["move left", "moves left", "go left", "transport left"])) {
         changePosition(null, -90);
         continueAction = false;
         gesture = "MOVE";
