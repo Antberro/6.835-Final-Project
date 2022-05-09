@@ -694,7 +694,7 @@ var processSpeech = function(transcript) {
     }
 
     // continue  
-    else if (userSaid(transcript, ["continue", "keep"]) && lastAction && !continueAction) {
+    else if (userSaid(transcript, ["continue"]) && lastAction && !continueAction) {
         lastAction();
         interval = setInterval(lastAction, continueTimeout);
         continueAction = true;
