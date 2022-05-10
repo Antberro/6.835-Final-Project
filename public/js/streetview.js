@@ -459,6 +459,28 @@ var processSpeech = function(transcript) {
         processed = true;
     }
 
+    // faster/slower
+    else if (userSaid(transcript, ["fast"])) {
+        if (continueAction) {
+            clearInterval(interval);
+            continueTimeout /= 1.5;
+            interval = setInterval(lastAction, continueTimeout);
+        }
+        else if (gesture === "MOVE") moveTimeout /= 1.5;
+        else if (gesture === "ROTATE") rotateTimeout /= 1.5;
+        else if (gesture === "ZOOM") zoomTimeout /= 1.5;
+    }
+    else if (userSaid(transcript, ["slow"])) {
+        if (continueAction) {
+            clearInterval(interval);
+            continueTimeout *= 1.5;
+            interval = setInterval(lastAction, continueTimeout);
+        }
+        else if (gesture === "MOVE") moveTimeout *= 1.5;
+        else if (gesture === "ROTATE") rotateTimeout *= 1.5;
+        else if (gesture === "ZOOM") zoomTimeout *= 1.5;
+    }
+
     // rotations
     else if (userSaid(transcript, ["rotate right", "turn right", "pan right", "tilt right"])) {
         let degree = 90;
@@ -660,29 +682,6 @@ var processSpeech = function(transcript) {
         voiceCommand = 'STOP_ZOOM';
         continueAction = false;
         processed = true;
-    }
-
-    // faster/slower
-    else if (userSaid(transcript, ["fast"])) {
-        if (continueAction) {
-            clearInterval(interval);
-            continueTimeout /= 1.5;
-            interval = setInterval(lastAction, continueTimeout);
-        }
-        else if (gesture === "MOVE") moveTimeout /= 1.5;
-        else if (gesture === "ROTATE") rotateTimeout /= 1.5;
-        else if (gesture === "ZOOM") zoomTimeout /= 1.5;
-
-    }
-    else if (userSaid(transcript, ["slow"])) {
-        if (continueAction) {
-            clearInterval(interval);
-            continueTimeout *= 1.5;
-            interval = setInterval(lastAction, continueTimeout);
-        }
-        else if (gesture === "MOVE") moveTimeout *= 1.5;
-        else if (gesture === "ROTATE") rotateTimeout *= 1.5;
-        else if (gesture === "ZOOM") zoomTimeout *= 1.5;
     }
 
     // undo
