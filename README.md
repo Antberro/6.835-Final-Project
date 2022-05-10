@@ -33,6 +33,8 @@ This will start the backend server on your machine. In Chrome go to http://local
 
 Note that the system is not currently tested on other browsers (e.g., Firefox, Safari) and thus may not work on them.
 
+For saving locations to work, cookies must be allowed for the system on the corresponding browser.
+
 # File Breakdown
 * server.js
 * public/
